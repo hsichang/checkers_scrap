@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>::checkers::</title>
+    <link rel="stylesheet" href="css/checkers.css">
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/parse.js"></script>
+    <script src="js/pubnub.min.js"></script>
+    <script src="js/checkers.js"></script>
+  </head>
+
+  <body class="checkers">
+    <div id="main">
+      <h3>Hello. My name is:</h3>
+      <input id="player_name" type="text" placeholder="input name here" />
+
+      <input type="radio" name="board-size" id="players-two" value="players-two" checked="checked"/>
+      <label for="players-two">Two Players</label>
+      <input type="radio" name="board-size" id="players-four" value="players-four" />
+      <label for="players-two">Two Players</label>
+
+      <input type="button" id="START GAME" value="submit" />
+
+      <div id="encyclopedia">
+        <h4>Did you know???</h4>
+        <h5>...that checkers is an ancient game dating back to 3000BC in the Sumerian city of Ur.</h5>
+      </div><!-- #encyclopedia -->
+    </div><!-- #main -->
+
+    <div id="board-container">
+      <div id="banner">C4ECKERS</div>
+      <div id="debug-display-square"></div>
+      <div id="board"></div>
+      <div id="game">
+        <!--
+        <div id="scoreboard">
+          <div class="title">Players</div>
+          <div id="playerName1" class="player">Player 1</div>
+          <div id="playerName2" class="player">Player 2</div>
+          <div id="playerName3" class="player">Player 3</div>
+          <div id="playerName4" class="player">Player 4</div>
+        </div>
+
+        <div id="upNext" class="move grid_4">Waiting for players to begin</div>
+        -->
+      </div><!-- #game -->
+    </div><!-- #board container -->
+
+    <div id="chat-container">
+
+    </div><!-- #chat-container -->
+
+</html>
