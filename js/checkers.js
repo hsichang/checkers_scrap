@@ -88,54 +88,56 @@ $(document).ready(function() {
           $('#r'+r).append(square);
 
           squares[square_name] = new Square(legal, r, c);
-          if (squares[square_name].player === 1) { self._positionPiece(square_name, 1) };
-          if (squares[square_name].player === 2) { self._positionPiece(square_name, 2) };
+          if (squares[square_name].player) { $('#'+square_name).toggleClass('occupied player_'+squares[square_name].player) };
+
+          var pieces = {};
+
           legal = !legal
-
-      /* todo:
-       * maybe build a hash table here
-       * the hash table could have an array
-       * of info about the square
-       * does it have a legal move?
-       * does it have a chip
-       * can it be activated?
-       * etc
-       *
-       * i.e.,
-       * Hash[:space(/r2c4/)][:legal] => true
-       *                     [:chip] => green
-       *                     [:chip] => null
-       *                     [:legal] => [r3c3,r3c3]
-       *                     [:etc] => etc;
-       */
-
         };
         legal = !legal
       };
 
-      self._move(squares, 1);
+      /*
+      self._move(1);
+      */
     },
 
     _positionPiece : function(square, player) {
       $('#'+square).toggleClass('occupied player_'+player);
     },
 
-    _move : function(squares, player) {
+    _move : function(player) {
+              /*
+               * example data:
+               * =============
+               * player = 1
+               * squares = all of the playable squares on the board
+               *
+               * needs
+               *
+               * btw: score = count of self occupied squares + 1
+               */
+
       var self = this;
       var $squares = $('.square');
+      var direction = (player === 1 ) ? 1 : -1;
 
       $('#move-banner').text('Player ' + player);
 
       $squares.on("click", function(evt) {
-        self._evaluateMoves(squares, player, evt.currentTarget.id);
+        var target = evt.currentTarget.id
+
       });
+
+      /* are you done?  yes - end, no? next move
+      player === 1 ? self._move(2) : self._move(1);
+       */
     },
 
-    _evaluateMoves : function(squares, player, square_id) {
+    _evaluateMoves : function(target) {
 /* TODO: up to here - basically make this and the "_move" function into one, there is a lot of redundancy here.  then _evaluateMoves.  should be a functoin with only one parameter, the square you are checking.  the recursion of it goes above in the "move" */
       var moves = {};
-      var $target = $('#'+square_id);
-      if (player === 1) { direction = 1 } else { direction = -1 };
+
       if ($target.hasClass("occupied player_"+player)) {
         $target.toggleClass('highlight');
       };
