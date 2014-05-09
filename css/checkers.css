@@ -55,7 +55,6 @@ body.checkers #board-container {
 	color: #42414A;
 	text-align: center;
   width: 100%;
-  position: absolute;
 }
 
 #game {

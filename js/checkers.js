@@ -56,11 +56,12 @@ $(document).ready(function() {
       var self = this,
           target = evt.target.id,
           $targetDiv = $('#' + target);
-/*
-      if (squares[target].legal && action === "display-square") {
-        self.$debugSquareDisplay.text("#"+target);
+
+      if ($targetDiv.hasClass("legal") && action === "display-square") {
+        self.$debugSquareDisplay.text("#"+target+" "+"classes: " + $targetDiv.attr("class"));
+      } else {
+        self.$debugSquareDisplay.text("");
       };
-      */
     },
 
     _toggleBoard: function(state) {
@@ -86,20 +87,36 @@ $(document).ready(function() {
           square_name = "c" + c + "r" + r;
           square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>';
           $('#r'+r).append(square);
-
-          squares[square_name] = new Square(legal, r, c);
-          if (squares[square_name].player) { $('#'+square_name).toggleClass('occupied player_'+squares[square_name].player) };
-
+          if ((c <= 3) && (legal)) { self._occupySquare(square_name, 1) };
+          if ((c >= 6) && (legal)) { self._occupySquare(square_name, 2) };
           var pieces = {};
-
-          legal = !legal
+          legal = !legal;
         };
-        legal = !legal
+        legal = !legal;
       };
-
-      /*
       self._move(1);
-      */
+    },
+
+    _occupySquare : function(square_name, player) {
+      $('#'+square_name).toggleClass('occupied player_'+player);
+    },
+
+    _getCoords : function(square_name) {
+      /* returns a hash with coords[col] & coords[row]*/
+      var square = square_name.split("");
+      var coords = {};
+      coords['col'] = square[1];
+      coords['row'] = square[3];
+      return coords;
+    },
+
+    _movePiece : function(pieces, from, to) {
+                   /* will have pieces, and will have boards.  board is easy, just toggle the class, pieces have to change the name of the hash key */
+
+      $('#'+from).toggleClass(/* whatever necessary classes */)
+      $('#'+to).toggleClass(/* whatever necessary classes */) /* maybe do an add to the function above? */
+      pieces[to] = pieces[from];
+      delete pieces[from];
     },
 
     _positionPiece : function(square, player) {
