@@ -5,30 +5,17 @@ $(document).ready(function() {
     /* board */
     this.$board = $('#board');
 
-    /* pieces */
-    this.$red = $('.red');
-    this.$green = $('.green');
-    this.$brown = $('.brown');
-    this.$orange = $('.orange');
-
     /* debug divs */
     this.$debugSquareDisplay = $('#debug-display-square');
 
     this.bindEvents();
   };
 
-  var Square = function(legal, row, column) {
-    this.legal = legal;
-    this.row = row;
-    this.column = column;
-    if ((column <= 3) && (legal)) {
-      this.player = 1;
-    } else if ((column >= 6) && (legal)) {
-      this.player = 2;
-    };
+  var Piece = function(player) {
+    this.player = player;
   };
 
-  Square.prototype = {
+  Piece.prototype = {
     /* todo: all of the square's functions */
   };
 
@@ -43,13 +30,6 @@ $(document).ready(function() {
           self._debug(evt, "display-square");
         });
       };
-
-      self._buildChatRoom();
-      /* on keypress maybe inside chat */
-      /*
-      self._chatListener() {
-      }
-      */
     },
 
     _debug: function(evt, action) {
@@ -70,13 +50,11 @@ $(document).ready(function() {
     },
 
     _buildGameBoard: function() {
-      var self = this,
-          rows, cols, squares, legal_space, squares;
-
-      squares = {};
-      rows = 8;
-      cols = 8;
-      legal = false;
+      var self = this;
+      var pieces = {};
+      var rows = 8;
+      var cols = 8;
+      var legal = false;
 
       self.$body.toggleClass('playing');
 
@@ -87,14 +65,19 @@ $(document).ready(function() {
           square_name = "c" + c + "r" + r;
           square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>';
           $('#r'+r).append(square);
-          if ((c <= 3) && (legal)) { self._occupySquare(square_name, 1) };
-          if ((c >= 6) && (legal)) { self._occupySquare(square_name, 2) };
-          var pieces = {};
+
+          if ((c <= 3) && (legal)) {
+            self._occupySquare(square_name, 1);
+            pieces[square_name] = new Piece(1);
+          } else if ((c >= 6) && (legal)) {
+            self._occupySquare(square_name, 2);
+            pieces[square_name] = new Piece(2);
+          };
           legal = !legal;
         };
         legal = !legal;
       };
-      self._move(1);
+      self._move(pieces, 1);
     },
 
     _occupySquare : function(square_name, player) {
@@ -123,7 +106,7 @@ $(document).ready(function() {
       $('#'+square).toggleClass('occupied player_'+player);
     },
 
-    _move : function(player) {
+    _move : function(pieces, player) {
               /*
                * example data:
                * =============
@@ -143,6 +126,8 @@ $(document).ready(function() {
 
       $squares.on("click", function(evt) {
         var target = evt.currentTarget.id
+        current_coords =
+        console.log(target);
 
       });
 
@@ -160,11 +145,6 @@ $(document).ready(function() {
       };
       next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row + 1)
       next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row - 1)
-    },
-
-    _buildChatRoom : function() {
-      console.log("...building chat room");
-
     },
 
   }; /* end of Checkers.prototype */
