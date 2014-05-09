@@ -141,7 +141,6 @@ $(document).ready(function() {
       };
       next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row + 1)
       next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row - 1)
-      self._evaluateNextMove(
     },
 
     _buildChatRoom : function() {
