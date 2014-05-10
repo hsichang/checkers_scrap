@@ -1,14 +1,12 @@
 $(document).ready(function() {
   var Checkers = function() {
-    this.$body = $('body');
-
-    /* board */
-    this.$board = $('#board');
+    var self = this;
+    self.$body = $('body');
+    self.$board = $('#board');
 
     /* debug divs */
-    this.$debugSquareDisplay = $('#debug-display-square');
-
-    this.bindEvents();
+    self.$debugSquareDisplay = $('#debug-display-square');
+    self.bindEvents();
   };
 
   var Piece = function(player) {
@@ -25,10 +23,12 @@ $(document).ready(function() {
           testing = true;
 
       if (testing) {
-        self._toggleBoard("playing");
+        self._toggleBoard("playing"); /* Starts the game */
+        /*
         self.$board.mousemove(function(evt) {
           self._debug(evt, "display-square");
         });
+        */
       };
     },
 
@@ -85,16 +85,14 @@ $(document).ready(function() {
     },
 
     _getCoords : function(square_name) {
-      /* returns a hash with coords[col] & coords[row]*/
-      var square = square_name.split("");
       var coords = {};
-      coords['col'] = square[1];
-      coords['row'] = square[3];
+      coords['col'] = parseInt(square_name.split("")[1]);
+      coords['row'] = parseInt(square_name.split("")[3]);
       return coords;
     },
 
     _movePiece : function(pieces, from, to) {
-                   /* will have pieces, and will have boards.  board is easy, just toggle the class, pieces have to change the name of the hash key */
+       /* will have pieces, and will have boards.  board is easy, just toggle the class, pieces have to change the name of the hash key */
 
       $('#'+from).toggleClass(/* whatever necessary classes */)
       $('#'+to).toggleClass(/* whatever necessary classes */) /* maybe do an add to the function above? */
@@ -120,31 +118,111 @@ $(document).ready(function() {
 
       var self = this;
       var $squares = $('.square');
-      var direction = (player === 1 ) ? 1 : -1;
+      var directionColumn = (player === 1 ) ? 1 : -1;
+      /* get rid of these directions, send the player number, get the direction from the player number, and multiply the row and col paths using the depth counter */
+      var directionRowPath1 = -1;
+      var directionRowPath2 = 1;
+/*
+      self._clearAllHighlights()
+      don't clear the highlights here, how will the square click know that there is a potential move  */
+      /* currently highlighting possible moves, next time, only highlight possible move chips */
 
       $('#move-banner').text('Player ' + player);
 
       $squares.on("click", function(evt) {
-        var target = evt.currentTarget.id
-        current_coords =
-        console.log(target);
+        var $squareClicked = $("#"+evt.currentTarget.id);
+        /*
+      self._clearAllHighlights()
+      don't clear the highlights here, how will the square click know that there is a potential move  */
+      /* currently highlighting possible moves, next time, only highlight possible move chips */
 
+        if ( self._squareIsActive($squareClicked) ) {
+          self._initiateMove( $squareClicked )
+        };
+
+        if ( self._squareIsOccupiedBySelf($squareClicked, player) ) {
+          var availableMoves = [];
+          var currentCoords = self._getCoords(evt.currentTarget.id);
+
+          self._clearAllHighlights()
+          availableMoves.push(self._evaluateNextMove(currentCoords, directionColumn, directionRowPath1, 1, player));
+          availableMoves.push(self._evaluateNextMove(currentCoords, directionColumn, directionRowPath2, 1, player));
+          self._highlightAvailableMoves(availableMoves) ? $squareClicked.addClass('active') : "";
+        };
+
+
+          /*
+        if ( self._squareIsUnplayable) {
+          self._clearAllHighlights()
+        };
+NEEDS WORK
+          */
       });
-
       /* are you done?  yes - end, no? next move
       player === 1 ? self._move(2) : self._move(1);
        */
     },
 
-    _evaluateMoves : function(target) {
-/* TODO: up to here - basically make this and the "_move" function into one, there is a lot of redundancy here.  then _evaluateMoves.  should be a functoin with only one parameter, the square you are checking.  the recursion of it goes above in the "move" */
-      var moves = {};
-
-      if ($target.hasClass("occupied player_"+player)) {
-        $target.toggleClass('highlight');
+    _highlightAvailableMoves : function(moves) {
+      var eval = false;
+      for (var move = 0; move < moves.length; move++) {
+        if (moves[move] !== false) {
+          eval = true;
+          $('#'+moves[move]).addClass('highlight')
+        };
       };
-      next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row + 1)
-      next = "c" + (squares[square_id].column + direction) + "r" + (squares[square_id].row - 1)
+      return eval;
+    },
+
+    _clearAllHighlights : function() {
+      $('.square').removeClass('highlight');
+    },
+
+    _evaluateNextMove : function(currentCoords, directionColumn, directionRow, depth, player) {
+      var self = this;
+      var targetCol = currentCoords['col'] + directionColumn;
+      var targetRow = currentCoords['row'] + directionRow;
+      var targetSquare = "c"+ targetCol + "r" + targetRow;
+
+      if (self._squareIsFreeAndLegal($('#'+targetSquare))) {
+        return targetSquare;
+      };
+      /* depth counter is how far deep you want to see ahead -- use this for multiple moves */
+      if ((self._squareIsOccupiedByOpponent($('#'+targetSquare), player)) && (depth < 3)) {
+        self._evaluateNextMove(targetSquare, (directionColumn*2), (directionRow*2), depth+1, player);
+      };
+      return false;
+    },
+
+    _squareIsFreeAndLegal : function($targetDiv) {
+      return ($targetDiv.hasClass("legal") && !($targetDiv.hasClass("occupied")))
+    },
+
+    _squareIsActive : function($targetDiv) {
+      return ($targetDiv.hasClass("active"));
+    },
+
+    _squareIsFree : function($targetDiv) {
+      return ( ($targetDiv.hasClass("legal")) && !($targetDiv.hasClass("occupied")) );
+    },
+
+    _squareIsOccupiedBySelf : function($targetDiv, player) {
+      return ($targetDiv.hasClass("player_"+player));
+    },
+
+    _squareIsOccupiedByOpponent : function($targetDiv, player) {
+      return ($targetDiv.hasClass("player_"+player))
+    },
+
+    _squareIsLegal : function($targetDiv) {
+      return ($targetDiv.hasClass("legal"));
+    },
+
+    _squareIsUnplayable : function($targetDiv, player) {
+      if (self._squareIsActive($targetDiv)) { return true };
+      if ($targetDiv.hasClass("occupied")) { return true };
+      if (!self._squareIsLegal($targetDiv)) { return true };
+      return false;
     },
 
   }; /* end of Checkers.prototype */
