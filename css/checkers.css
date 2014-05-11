@@ -103,7 +103,10 @@ body.checkers #board-container {
   }
 
   .square.legal.highlight {
-    background-color: yellow;
+    border: 2px dotted yellow;
+    width: 49px;
+    height: 51px;
+    background-color:
   }
 
 /* pieces */

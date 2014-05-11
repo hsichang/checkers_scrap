@@ -78,7 +78,7 @@ $(document).ready(function() {
         };
         legal = !legal;
       };
-      self._move(pieces, "player_1");
+      self._game(pieces, "player_1");
     },
 
     _toggleOccupiedSquare : function(square_name, player) {
@@ -89,8 +89,7 @@ $(document).ready(function() {
       $square.toggleClass('selected');
     },
 
-    /* rename _move into like _game or something */
-    _move : function(pieces, player) {
+    _game : function(pieces, player) {
       var self = this;
       var $squares = $('.square');
       $('#move-banner').text('Player ' + player);
@@ -104,7 +103,9 @@ $(document).ready(function() {
         var $squareClicked = self._constructId(evt.currentTarget.id);
         self._toggleSelectedSquare($squareClicked);
 
+        /* todo: change the conditional here to be more clear what is being asked */
         if ( self._squareIsOccupiedBySelf($squareClicked, player) && !(self._squareIsLegalMove( $squareClicked )) ) {
+        self._clearAllHighlights();
           var availableMoves = [];
 
           availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_1", 1, player));
@@ -121,6 +122,7 @@ $(document).ready(function() {
           self._moveSquare( $squareClicked, $previousSelected, player, { take: true } );
           player = (player === "player_1") ? "player_2" : "player_1";
         };
+
       });
     },
 
@@ -138,9 +140,11 @@ $(document).ready(function() {
 
     _moveSquare: function($targetDiv, $prevDiv, player, options) {
       var self = this;
-      self._clearAllHighlights();
       $prevDiv.toggleClass(player);
       $targetDiv.toggleClass(player);
+      self._toggleSelectedSquare($targetDiv);
+      self._clearAllHighlights();
+
       if (options.take) {
         data = $targetDiv.data();
         $div = $("#"+data.take);
