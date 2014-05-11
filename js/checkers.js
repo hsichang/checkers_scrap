@@ -155,26 +155,36 @@ $(document).ready(function() {
         var directionColumn = (player === "player_1" ) ? 1 : -1;
         var directionRow = (rowPath === "rowPath_1") ? 1 : -1;
         var coords = $square.data("coords");
-        var targetCol = coords['col'] + directionColumn;
-        var targetRow = coords['row'] + directionRow;
+        var targetCol = coords['col'] + (directionColumn * depth);
+        var targetRow = coords['row'] + (directionRow * depth);
         var $targetSquare = self._constructCoords(targetCol, targetRow);
 
-        if (self._squareIsLegalAndEmpty($targetSquare)) {
+        if ( self._squareIsLegalAndEmpty($targetSquare) && depth === 1 ) {
           return $targetSquare;
         }
 
+        if ( self._squareIsLegalAndEmpty($targetSquare) && depth === 2 ) {
+          self._movementHasTake($targetSquare, $square);
+          return $targetSquare;
+        };
+
         if (self._squareIsOccupiedByOpponent($targetSquare, player)) {
-          return this._evaluateNextMove($targetSquare, rowPath, 2, player);
+          return this._evaluateNextMove($square, rowPath, 2, player);
         };
 
         return false;
       };
     },
 
-     _constructCoords : function(column, row) {
-       $div = $("#c"+column+"r"+row);
-       return $div
-     },
+    _movementHasTake : function($newSquare, $jumpedSquare) {
+      $newSquare.addClass("take");
+      $newSquare.data("take", $jumpedSquare.attr("id"));
+    },
+
+    _constructCoords : function(column, row) {
+      $div = $("#c"+column+"r"+row);
+      return $div
+    },
 
     _constructId : function(name) {
       $div = $("#"+name);
