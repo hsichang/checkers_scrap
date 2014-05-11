@@ -30,6 +30,7 @@ $(document).ready(function() {
         });
         */
       };
+
     },
 
     _debug: function(evt, action) {
@@ -85,9 +86,8 @@ $(document).ready(function() {
       $('#'+square_name).toggleClass(player);
     },
 
-    /* todo: maybe not necessary ? */
     _toggleSelectedSquare : function($square) {
-      $square.toggleClass(selected);
+      $square.toggleClass('selected');
     },
 
     _movePiece : function(pieces, from, to) {
@@ -102,44 +102,30 @@ $(document).ready(function() {
     _move : function(pieces, player) {
       var self = this;
       var $squares = $('.square');
-
       $('#move-banner').text('Player ' + player);
-      $squares.on("click", function(evt) {
-        var $squareClicked = self._constructId(evt.currentTarget.id);
 
-        if ( self._squareIsLegalMove( $squareClicked ) ) {
-          self._initiateMove( $squareClicked, player )
-          /* move piece and take piece and score */
-          player = (player === "player_1") ? "player_2" : "player_1";
-          self._move(pieces, player);
+      $squares.on("click", function(evt) {
+        if ($('.selected').length !== 0) {
+          var $previousSelected = self._constructId($('.selected')[0].id);
+          self._toggleSelectedSquare($previousSelected);
         };
 
-        if ( self._squareIsOccupiedBySelf($squareClicked, player) ) {
-          /* HERE HERE ==============================>
-           *  move available moves somewhere else so the scope is bigger, or
-           *  for some reason the next move thinks that the original move is still going
-           *  clear that our somehow.
-           *  =====================================HERE */
-          var availableMoves = [];
-          self._clearAllHighlights()
+        var $squareClicked = self._constructId(evt.currentTarget.id);
+        self._toggleSelectedSquare($squareClicked);
 
-          /* TODO: can the two paths be consolidated? */
+        if ( self._squareIsOccupiedBySelf($squareClicked, player) && !(self._squareIsLegalMove( $squareClicked )) ) {
+          var availableMoves = [];
+
           availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_1", 1, player));
           availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_2", 1, player));
           self._highlightAvailableMoves(availableMoves);
         };
 
-
-          /*
-        if ( self._squareIsUnplayable) {
-          self._clearAllHighlights()
+        if ( self._squareIsLegalMove( $squareClicked ) ) {
+          self._initiateMove( $squareClicked, $previousSelected, player );
+          player = (player === "player_1") ? "player_2" : "player_1";
         };
-NEEDS WORK
-          */
       });
-      /* are you done?  yes - end, no? next move
-      player === 1 ? self._move(2) : self._move(1);
-       */
     },
 
     _highlightAvailableMoves : function(moves) {
@@ -154,21 +140,12 @@ NEEDS WORK
       $('.square').removeClass('highlight');
     },
 
-    _initiateMove: function($targetDiv, player) {
+    _initiateMove: function($targetDiv, $prevDiv, player) {
       var self = this;
-      self._swapOccupiedSquares($targetDiv, player);
-      /* go to next move */
-    },
+      $prevDiv.toggleClass(player);
+      $targetDiv.toggleClass(player);
 
-    _swapOccupiedSquares: function($targetDiv, player) {
-      var self = this;
       self._clearAllHighlights();
-      $targetDiv.addClass(player);
-
-      /* must be another way to find all of the selecteds and toggle them */
-      $('.selected').removeClass(player);
-      $('.selected').removeClass('selected');
-      /*clear selected and highlights and whatever else */
     },
 
     /* TODO: note that this algorithm is not taking into account king'd pieces */
@@ -178,8 +155,8 @@ NEEDS WORK
         var directionColumn = (player === "player_1" ) ? 1 : -1;
         var directionRow = (rowPath === "rowPath_1") ? 1 : -1;
         var coords = $square.data("coords");
-        var targetCol = coords['col'] + (directionColumn*depth);
-        var targetRow = coords['row'] + (directionRow*depth);
+        var targetCol = coords['col'] + directionColumn;
+        var targetRow = coords['row'] + directionRow;
         var $targetSquare = self._constructCoords(targetCol, targetRow);
 
         if (self._squareIsLegalAndEmpty($targetSquare)) {
@@ -187,7 +164,7 @@ NEEDS WORK
         }
 
         if (self._squareIsOccupiedByOpponent($targetSquare, player)) {
-          self._evaluateNextMove($targetSquare, rowPath, depth+1, player);
+          return this._evaluateNextMove($targetSquare, rowPath, 2, player);
         };
 
         return false;
@@ -230,8 +207,9 @@ NEEDS WORK
       return ($targetDiv.hasClass(player));
     },
 
-    _squareIsOccupiedByOpponent : function($targetDiv, player) {
-      return ($targetDiv.hasClass(player))
+    _squareIsOccupiedByOpponent : function($targetDiv, thisPlayer) {
+      var opponent = (thisPlayer === "player_1" ) ? "player_2" : "player_1";
+      return ($targetDiv.hasClass(opponent))
     },
 
     _squareIsUnplayable : function($targetDiv, player) {
