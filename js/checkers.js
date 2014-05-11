@@ -256,3 +256,5 @@ $(document).ready(function() {
 
   new Checkers();
 });
+
+/* todo - fix the max depth thing.  just adding depth+1 should be enough */
