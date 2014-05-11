@@ -5,7 +5,6 @@ $(document).ready(function() {
     self.$board = $('#board');
     self.$debugSquareDisplay = $('#debug-display-square');
 
-    /* todo make a console function that inputs and displays options hash */
     self.bindEvents();
   };
 
@@ -90,15 +89,7 @@ $(document).ready(function() {
       $square.toggleClass('selected');
     },
 
-    _movePiece : function(pieces, from, to) {
-       /* will have pieces, and will have boards.  board is easy, just toggle the class, pieces have to change the name of the hash key */
-
-      $('#'+from).toggleClass(/* whatever necessary classes */)
-      $('#'+to).toggleClass(/* whatever necessary classes */) /* maybe do an add to the function above? */
-      pieces[to] = pieces[from];
-      delete pieces[from];
-    },
-
+    /* rename _move into like _game or something */
     _move : function(pieces, player) {
       var self = this;
       var $squares = $('.square');
@@ -121,8 +112,13 @@ $(document).ready(function() {
           self._highlightAvailableMoves(availableMoves);
         };
 
-        if ( self._squareIsLegalMove( $squareClicked ) ) {
-          self._initiateMove( $squareClicked, $previousSelected, player );
+        if ( self._moveWithoutTake($squareClicked) ) {
+          self._moveSquare( $squareClicked, $previousSelected, player, { take: false } );
+          player = (player === "player_1") ? "player_2" : "player_1";
+        };
+
+        if ( self._moveWithTake($squareClicked, $previousSelected, player) ) {
+          self._moveSquare( $squareClicked, $previousSelected, player, { take: true } );
           player = (player === "player_1") ? "player_2" : "player_1";
         };
       });
@@ -140,12 +136,16 @@ $(document).ready(function() {
       $('.square').removeClass('highlight');
     },
 
-    _initiateMove: function($targetDiv, $prevDiv, player) {
+    _moveSquare: function($targetDiv, $prevDiv, player, options) {
       var self = this;
+      self._clearAllHighlights();
       $prevDiv.toggleClass(player);
       $targetDiv.toggleClass(player);
-
-      self._clearAllHighlights();
+      if (options.take) {
+        data = $targetDiv.data();
+        $div = $("#"+data.take);
+        $div.toggleClass(self._opponentOf(player));
+      };
     },
 
     /* TODO: note that this algorithm is not taking into account king'd pieces */
@@ -161,15 +161,19 @@ $(document).ready(function() {
 
         if ( self._squareIsLegalAndEmpty($targetSquare) && depth === 1 ) {
           return $targetSquare;
-        }
+        };
 
-        if ( self._squareIsLegalAndEmpty($targetSquare) && depth === 2 ) {
-          self._movementHasTake($targetSquare, $square);
+        if ( self._squareIsLegalAndEmpty($targetSquare) && depth > 1 ) {
+          var jumpCol = coords['col'] + directionColumn;
+          var jumpRow = coords['row'] + directionRow;
+          $jumpSquare = self._constructCoords(jumpCol, jumpRow);
+          self._movementHasTake($targetSquare, $jumpSquare);
           return $targetSquare;
         };
 
-        if (self._squareIsOccupiedByOpponent($targetSquare, player)) {
-          return this._evaluateNextMove($square, rowPath, 2, player);
+        if (self._squareIsOccupiedByOpponentUnderMaxDepth($targetSquare, player, depth, 3)) {
+          depth = depth + 1;
+          return this._evaluateNextMove($square, rowPath, depth, player);
         };
 
         return false;
@@ -222,12 +226,30 @@ $(document).ready(function() {
       return ($targetDiv.hasClass(opponent))
     },
 
+    _squareIsOccupiedByOpponentUnderMaxDepth : function($targetDiv, thisPlayer, depth, maxDepth) {
+      var self = this;
+      return ( self._squareIsOccupiedByOpponent($targetDiv, thisPlayer) && (depth < maxDepth) )
+
+    },
+
     _squareIsUnplayable : function($targetDiv, player) {
       var self = this;
       if (!(self._squareIsLegal($targetDiv))) { return true };
       if (self._squareIsSelected($targetDiv)) { return true };
       if (self._squareIsLegalAndOccupied($targetDiv)) { return true };
       return false;
+    },
+
+    _moveWithoutTake : function($targetDiv) {
+      return ( $targetDiv.hasClass("highlight") && !($targetDiv.hasClass("take")) );
+    },
+
+    _moveWithTake : function($targetDiv) {
+      return ( $targetDiv.hasClass("highlight") && $targetDiv.hasClass("take") );
+    },
+
+    _opponentOf : function(player) {
+      return (player === "player_1") ? "player_2" : "player_1";
     },
 
   }; /* end of Checkers.prototype */
