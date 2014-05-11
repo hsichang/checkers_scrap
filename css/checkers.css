@@ -109,11 +109,11 @@ body.checkers #board-container {
 /* pieces */
 
   /* temp */
-  .occupied.player_1 {
+  .square.player_1 {
     background-color: green;
   }
 
-  .occupied.player_2 {
+  .square.player_2 {
     background-color: red;
   }
 
