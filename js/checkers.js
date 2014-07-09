@@ -3,6 +3,8 @@ $(document).ready(function() {
     var self = this;
     self.$body = $('body');
     self.$board = $('#board');
+    self.$player_1_move = $('#move_player_1');
+    self.$player_2_move = $('#move_player_2');
     self.$debugSquareDisplay = $('#debug-display-square');
 
     self.bindEvents();
@@ -13,7 +15,6 @@ $(document).ready(function() {
   };
 
   Piece.prototype = {
-    /* todo: all of the square's functions */
   };
 
   Checkers.prototype = {
@@ -44,6 +45,24 @@ $(document).ready(function() {
       };
     },
 
+    _smartConsole : function(params) {
+/*
+ *    Use like this:
+      params = {legal: legal, pieces: pieces};
+      self._smartConsole(params);
+*/
+      var self = this;
+      for (var v in params) {
+        if (params.hasOwnProperty(v)) {
+          console.log(v);
+          console.log("======");
+          console.log(params[v]);
+          console.log(" ")
+          console.log(" ")
+        };
+      };
+    },
+
     _toggleBoard: function(state) {
       var self = this;
       if (state === "playing") { self._buildGameBoard() };
@@ -55,9 +74,9 @@ $(document).ready(function() {
       var rows = 8;
       var cols = 8;
       var legal = false;
+      var pieceCounter = 0;
 
       self.$body.toggleClass('playing');
-
       for (r=1; r<rows+1; r++) {
         self.$board.append('<div id="r' + r + '" class="row"></div>');
         for (c=1; c<cols+1; c++) {
@@ -69,15 +88,17 @@ $(document).ready(function() {
 
           if ((c <= 3) && (legal)) {
             self._toggleOccupiedSquare(square_name, "player_1");
-            pieces[square_name] = new Piece("player_1");
+            pieces[pieceCounter] = new Piece("player_1");
+            pieceCounter++
           } else if ((c >= 6) && (legal)) {
             self._toggleOccupiedSquare(square_name, "player_2");
-            pieces[square_name] = new Piece("player_2");
+            pieces[pieceCounter++] = new Piece("player_2");
           };
           legal = !legal;
         };
         legal = !legal;
       };
+
       self._game(pieces, "player_1");
     },
 
@@ -92,7 +113,6 @@ $(document).ready(function() {
     _game : function(pieces, player) {
       var self = this;
       var $squares = $('.square');
-      $('#move-banner').text('Player ' + player);
 
       $squares.on("click", function(evt) {
         if ($('.selected').length !== 0) {
@@ -103,24 +123,20 @@ $(document).ready(function() {
         var $squareClicked = self._constructId(evt.currentTarget.id);
         self._toggleSelectedSquare($squareClicked);
 
-        /* todo: change the conditional here to be more clear what is being asked */
-        if ( self._squareIsOccupiedBySelf($squareClicked, player) && !(self._squareIsLegalMove( $squareClicked )) ) {
-        self._clearAllHighlights();
+        if ( self._squareIsOccupiedBySelf($squareClicked, player) ) {
+          self._clearAllHighlights();
           var availableMoves = [];
-
           availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_1", 1, player));
           availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_2", 1, player));
           self._highlightAvailableMoves(availableMoves);
         };
 
         if ( self._moveWithoutTake($squareClicked) ) {
-          self._moveSquare( $squareClicked, $previousSelected, player, { take: false } );
-          player = (player === "player_1") ? "player_2" : "player_1";
+          player = self._moveSquare( $squareClicked, $previousSelected, player, { take: false } );
         };
 
-        if ( self._moveWithTake($squareClicked, $previousSelected, player) ) {
-          self._moveSquare( $squareClicked, $previousSelected, player, { take: true } );
-          player = (player === "player_1") ? "player_2" : "player_1";
+        if ( self._moveWithTake($squareClicked) ) {
+          player = self._moveSquare( $squareClicked, $previousSelected, player, { take: true } );
         };
 
       });
@@ -148,15 +164,25 @@ $(document).ready(function() {
       if (options.take) {
         data = $targetDiv.data();
         $div = $("#"+data.take);
+        $div.toggleClass("take");
         $div.toggleClass(self._opponentOf(player));
       };
+
+      self._sanityCheck();
+
+      return (player === "player_1") ? "player_2" : "player_1";
     },
 
     /* TODO: note that this algorithm is not taking into account king'd pieces */
     _evaluateNextMove : function($square, rowPath, depth, player) {
       if (depth < 3) {
         var self = this;
-        var directionColumn = (player === "player_1" ) ? 1 : -1;
+        /* to take king into consideration make a func like:
+         * directionColumn = leftOrRight($square, player);
+         * if player is 1 and not king || player 2 and king = +1
+         * else -1
+         * */
+        var directionColumn = (player === "player_1") ? 1 : -1;
         var directionRow = (rowPath === "rowPath_1") ? 1 : -1;
         var coords = $square.data("coords");
         var targetCol = coords['col'] + (directionColumn * depth);
@@ -171,7 +197,7 @@ $(document).ready(function() {
           var jumpCol = coords['col'] + directionColumn;
           var jumpRow = coords['row'] + directionRow;
           $jumpSquare = self._constructCoords(jumpCol, jumpRow);
-          self._movementHasTake($targetSquare, $jumpSquare);
+          self._flagSquareForTake($targetSquare, $jumpSquare);
           return $targetSquare;
         };
 
@@ -184,7 +210,8 @@ $(document).ready(function() {
       };
     },
 
-    _movementHasTake : function($newSquare, $jumpedSquare) {
+    _flagSquareForTake : function($newSquare, $jumpedSquare) {
+                         /* bug with take.  line 189 is problem. shouldn't need a class. take never changes style. just the data. remove data after take */
       $newSquare.addClass("take");
       $newSquare.data("take", $jumpedSquare.attr("id"));
     },
@@ -256,9 +283,14 @@ $(document).ready(function() {
       return (player === "player_1") ? "player_2" : "player_1";
     },
 
+    _sanityCheck : function() {
+      var self = this;
+      $('.illegal').removeClass('player_1');
+      $('.illegal').removeClass('player_2');
+      self._clearAllHighlights();
+    },
+
   }; /* end of Checkers.prototype */
 
   new Checkers();
 });
-
-/* todo - fix the max depth thing.  just adding depth+1 should be enough */
