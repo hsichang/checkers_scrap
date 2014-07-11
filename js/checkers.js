@@ -8,13 +8,50 @@ $(document).ready(function() {
     self.$debugSquareDisplay = $('#debug-display-square');
 
     self.bindEvents();
+
+    /* this time we will be building an object Board, which is a hash
+     * that contains "squares".
+     *
+     * Each "square" holds a single variable.  square(square_name);
+     *
+     * square(square_name) is an object
+     *
+     *
+     *
+     */
+
   };
 
+  /* Piece may be deprecated */
   var Piece = function(player) {
     this.player = player;
   };
 
-  Piece.prototype = {
+  function Square(name) {
+    /* modify function: if you update a square it should check if sane, */
+    var self = this;
+    self.name = name;
+  }
+
+  Square.prototype = {
+    _getName: function() {
+      var self = this;
+      return self.name;
+    },
+
+    _sane: function() {
+      var self = this;
+      if (!self.occupied && self.selected) {
+        alert(self.name + 'is insane.  Cannot be occupied and selected');
+      };
+    },
+
+    _occupy: function() {
+      var self = this;
+      self.occupy = true;
+      self._sane(); // sanity check
+    },
+
   };
 
   Checkers.prototype = {
@@ -76,13 +113,19 @@ $(document).ready(function() {
       var legal = false;
       var pieceCounter = 0;
 
+      var board = {};
+
       self.$body.toggleClass('playing');
       for (r=1; r<rows+1; r++) {
         self.$board.append('<div id="r' + r + '" class="row"></div>');
         for (c=1; c<cols+1; c++) {
           legal_space = legal ? "legal" : "illegal";
           square_name = "c" + c + "r" + r;
-          square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>';
+
+          board[square_name] = new Square(square_name);
+
+          square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>'; /* MUST separate view from this */
+
           $('#r'+r).append(square);
           $('#'+square_name).data( "coords", { row: r, col: c } );
 
@@ -100,6 +143,22 @@ $(document).ready(function() {
       };
 
       self._game(pieces, "player_1");
+
+  /* =======================================
+   *
+   * SANITY CHECK : This is the board
+   *
+   * ======================================= */
+
+      console.log('Board: ');
+      console.log(board);
+      for (var square in board) {
+        if (board.hasOwnProperty(square)) {
+          console.log(board[square]._getName());
+        };
+      };
+  /* ======================================= */
+
     },
 
     _toggleOccupiedSquare : function(square_name, player) {
