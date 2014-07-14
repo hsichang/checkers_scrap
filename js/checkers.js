@@ -17,14 +17,13 @@ $(document).ready(function() {
     self.$player_1_move = $('#move_player_1');
     self.$player_2_move = $('#move_player_2');
     self.$debugSquareDisplay = $('#debug-display-square');
-
     self.players = {};
+    self.turn = null;
+    self.moves = [];
     self.players =  { 1 : new Player(1),
                       2 : new Player(2) };
 
-    self.turn = null;
-    self.bindEvents();
-    self.moves = [];
+    self._toggleBoard("playing"); /* Starts the game */
   };
 
 
@@ -33,6 +32,75 @@ $(document).ready(function() {
   };
 
   Board.prototype = {
+
+    _drawNewBoard: function(checkersGame) {
+      var thisGame = checkersGame,
+          rows = 8,
+          cols = 8,
+          legal = false,
+          gameBoard = this;
+
+      thisGame.$body.toggleClass('playing');            /* current starts the game */
+
+      for (r=1; r<rows+1; r++) {
+
+        thisGame.$board.append('<div id="r' + r + '" class="row"></div>');
+
+        for (c=1; c<cols+1; c++) {
+          legal_space = legal ? "legal" : "illegal";
+          square_name = "c" + c + "r" + r;
+
+          coords  = { row: r,
+                      col: c };
+
+          gameBoard._drawNewSquare(square_name, legal_space, coords);
+
+          // still need to initialize not legal and not occupied //
+          // populate at the end
+
+          if ((c <= 3) && (legal)) {  // move to an initialize function
+            if ( (c === 1) && (legal) ) {
+              gameBoard[square_name] = new Square(square_name, coords, legal, 1, true);
+            } else {
+              gameBoard[square_name] = new Square(square_name, coords, legal, 1, false);
+            };
+          } else if ((c >= 6) && (legal)) {
+            if ( (c === 8) && (legal) ) {
+              gameBoard[square_name] = new Square(square_name, coords, legal, 2, true);
+            } else {
+              gameBoard[square_name] = new Square(square_name, coords, legal, 2, false);
+            };
+          } else {
+            gameBoard[square_name] = new Square(square_name, coords, legal)
+          };
+          gameBoard[square_name]._populateSquare();
+
+          legal = !legal;
+        };
+        legal = !legal;
+      };
+
+      thisGame.turn = 1;
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+    _drawNewSquare: function(name, legal, coords) {
+      square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>';
+      $('#r'+coords.row).append(square);
+    },
+
+
     _highlightAvailableMoves : function(square) {
       var self = this;
       square.selected = true;
@@ -72,7 +140,8 @@ $(document).ready(function() {
         score = game._movePieces(thisBoard, moveData.pieces);
       };
 
-      recordOfMove = {  from  : fromSquare.name,
+      recordOfMove = {  player: game.turn,
+                        from  : fromSquare.name,
                         to    : toSquare.name,
                         pieces: moveData.pieces,
                         take  : true,
@@ -80,11 +149,11 @@ $(document).ready(function() {
                         score2: game.players[2].score };
 
       game.moves.push(recordOfMove);
-
+                                                          console.log("\n\n\nGame moves: ");
+                                                          console.log(game.moves);
       fromSquare._emptySquare();
       toSquare._populateSquare();
 
-      // sanity check at the end
       fromSquare._sane();
       toSquare._sane();
     },
@@ -181,14 +250,24 @@ $(document).ready(function() {
    *
    *
    */
-  function Square(name) {
+  function Square(name, coords, legal, player, king) {
     /* modify function: if you update a square it should check if sane, */
     var self = this;
-    self.name = name;
-    self.king1 = false;
-    self.king2 = false;
-    self.selected = false;
-    self.availableMoves = [];
+    self.name               = name;
+    self.coords             = coords;
+    self.availableMoves     = [];
+    self.legal_space        = legal;
+    self.selected           = false;
+    self.king1              = false;
+    self.king2              = false;
+    self.occupied           = (player !== undefined);
+
+    if ( self.occupied && self.legal_space) {
+      self.player           = player;
+      if (self.king) { self.player === 1 ? self.king2 = true : self.king1 = true };
+    };
+
+    self._sane();
   }
 
   Square.prototype = {
@@ -248,8 +327,7 @@ $(document).ready(function() {
     },
 
     _populateSquare: function() {
-      var thisSquare = this,
-          error_msg  = 'Error. '+thisSquare.name+' is not occupied.';
+      var thisSquare = this;
 
       if (thisSquare.occupied) {
         if (thisSquare.player === 1) {
@@ -257,10 +335,6 @@ $(document).ready(function() {
         } else if (thisSquare.player === 2) {
           thisSquare.king ? $('#'+thisSquare.name).append('<div class="piece_2">K</div>') : $('#'+thisSquare.name).append('<div class="piece_2"></div>');
         }
-      } else {
-        alert(error_msg);
-        $('#'+thisSquare.name).children().remove();
-        return false;
       };
     },
 
@@ -344,26 +418,6 @@ $(document).ready(function() {
           y_dir = [1, -1],
           step = 1;
 
-      /*
-       * look at where i am
-       * (return location)
-       *
-       * check direction
-       * (king === true?)
-       *
-       * go direction one
-       * (right if not king 1)
-       *
-       * i go up one
-       *
-       *   check if free (playable ++)
-       *   check if occupied by self (not playable)
-       *   check if occupied by opponent (check for jump)
-
-       * i go down one
-       *
-       */
-
       if (thisSquare.player === p) {
         for(var y_step in y_dir) {
           if (thisSquare._constructMoves(thisSquare.coords, x_dir, y_dir[y_step]) !== false) {
@@ -404,21 +458,6 @@ $(document).ready(function() {
   };
 
   Checkers.prototype = {
-    bindEvents: function() {
-      var self = this,
-          testing = true;
-
-      if (testing) {
-        self._toggleBoard("playing"); /* Starts the game */
-        /*
-        self.$board.mousemove(function(evt) {
-          self._debug(evt, "display-square");
-        });
-        */
-      };
-
-    },
-
     _debug: function(evt, action) {
       var self = this,
           target = evt.target.id,
@@ -465,10 +504,6 @@ $(document).ready(function() {
       console.log("\n\n\n\nScore:");
       console.log("Player1: " + thisGame.players[1].score + ". Player2: " + thisGame.players[2].score + "\n\n\n");
     },
-    _opponent: function(player) {
-      var opponent = (player === 1) ? 2 : 1;
-      return opponent;
-    },
 
     _clearEvaluatedMoves: function(board) {
       var clearFunc = function(square) {
@@ -479,92 +514,22 @@ $(document).ready(function() {
 
     _toggleBoard: function(state) {
       var self = this;
-      if (state === "playing") { self._buildGameBoard() };
-    },
-
-    _buildGameBoard: function() {
-      var self = this;
-      var rows = 8;
-      var cols = 8;
-      var legal = false;
-      var board = {};
-
-
-      var gameBoard = new Board();
-
-      self.$body.toggleClass('playing');            /* routes the screen to play mode */
-
-      for (r=1; r<rows+1; r++) {
-
-        self.$board.append('<div id="r' + r + '" class="row"></div>');
-
-        for (c=1; c<cols+1; c++) {
-          legal_space = legal ? "legal" : "illegal";
-          square_name = "c" + c + "r" + r;
-
-          gameBoard[square_name] = new Square(square_name);
-          gameBoard[square_name].legal_space = legal_space;
-          gameBoard[square_name].coords = {
-            row: r,
-            col: c
-          };
-
-          square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>'; /* MUST separate view from this */
-
-          $('#r'+r).append(square);
-          // $('#'+square_name).data( "coords", { row: r, col: c } );    /* deprecate ? */
-
-          if ((c <= 3) && (legal)) {  // move to an initialize function
-            if ( (c === 1) && (legal) ) {
-              gameBoard[square_name].king2 = true;
-            };
-            gameBoard[square_name].player = 1;
-            gameBoard[square_name].active = false;
-            gameBoard[square_name].occupied = true;
-            gameBoard[square_name].king = false;
-            gameBoard[square_name]._populateSquare();
-            gameBoard[square_name]._sane();
-          } else if ((c >= 6) && (legal)) {
-            if ( (c === 8) && (legal) ) {
-              // like... new square (king) vs new square no king)
-              gameBoard[square_name].king1 = true;
-            };
-            gameBoard[square_name].player = 2;
-            gameBoard[square_name].occupied = true;
-            gameBoard[square_name].king = false;
-            gameBoard[square_name].active = false;
-            gameBoard[square_name]._populateSquare();
-            gameBoard[square_name]._sane();
-          };
-          legal = !legal;
-        };
-        legal = !legal;
+      if (state === "playing") {
+        gameBoard = new Board();
+        gameBoard._drawNewBoard(self)
+        self._playerTurn(gameBoard);            // start game -- make an option here for one or two players
+        // default to one player
       };
-
-      self.turn = 1;
-      self._playerTurn(gameBoard);
-
     },
 
-    _toggleOccupiedSquare : function(square_name, player) {
-      $('#'+square_name).toggleClass(player);
-    },
-
-    _toggleSelectedSquare : function($square) {
-      $square.toggleClass('selected');
-    },
-
-    // send functions here to operate on individual squares
     _evalSquareFunction: function(board, callbackFunc) {
       var self = this,
           player = self.turn;
 
       for (var square in board) {
-
         if (board.hasOwnProperty(square)) {
-          if ((square !== "currentSquare") && (board[square].legal_space === "legal")) {    // should be a boolean value
+          if ((square !== "currentSquare") && (board[square].legal_space)) {    // should be a boolean value
             if (board[square]._occupiedByPlayer(player)) {
-
               callbackFunc(board[square]);
             };
           };
@@ -595,7 +560,6 @@ $(document).ready(function() {
 
       $squares.on("click", function(evt) {
         var targetSquare = gameBoard[evt.currentTarget.id];
-        console.log(targetSquare);
 
         if ( !targetSquare._active() ) {
 
