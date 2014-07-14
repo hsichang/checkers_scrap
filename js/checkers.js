@@ -1,3 +1,14 @@
+// checklist:
+//
+// Double Jump
+// Scoreboard
+// Piece counter
+// Game over
+// Lobby
+// Chat
+// Single Player
+// PubNub
+
 $(document).ready(function() {
   var Checkers = function() {
     var self = this;
@@ -7,25 +18,93 @@ $(document).ready(function() {
     self.$player_2_move = $('#move_player_2');
     self.$debugSquareDisplay = $('#debug-display-square');
 
-    self.player1 = new Player(1);
-    self.player2 = new Player(2);
+    self.players = {};
+    self.players =  { 1 : new Player(1),
+                      2 : new Player(2) };
 
-
+    self.turn = null;
     self.bindEvents();
+    self.moves = [];
   };
 
 
   var Board = function() {
+    /*
+     * Board
+     *
+     * currentSquare = square that is scoped to move
+     *
+     *
+     */
+    var self = this;
 
 
   };
 
   Board.prototype = {
-    _highlightMoves: function(moves) {
+    _highlightAvailableMoves : function(square) {
+      var self = this;
+      square.selected = true;
+      if (square.availableMoves.length > 0) {
+        // has moves
+        for (var openSquare in square.availableMoves) {
+          self.currentSquare = square;
+          $('#'+square.availableMoves[openSquare].squareID).toggleClass('highlight');
+        };
+      }
+    },
 
+    _clearHighlights : function() {
+      var self = this;
+      self.currentSquare = null;
+      $('.square').removeClass('highlight');
+    },
 
-    };
+    _initiateMove: function(toSquare, game) {
+      var thisBoard     = this,
+          players       = game.players,
+          pieces        = 0,
+          fromSquare    = thisBoard.currentSquare,
+          recordOfMove  = {},
+          moveData      = fromSquare._findMoveBySquareId(toSquare.name),
+          newKing       = toSquare._checkKing(game);
 
+      thisBoard.currentSquare = null;
+
+      toSquare.selected = false;
+      toSquare.occupied = true;
+      toSquare.player   = fromSquare.player;
+      toSquare.king     = (newKing) ? true : fromSquare.king;
+
+      if (moveData.pieces) {
+        pieces = moveData.pieces
+        score = game._movePieces(thisBoard, moveData.pieces);
+      };
+
+      recordOfMove = {  from  : fromSquare.name,
+                        to    : toSquare.name,
+                        pieces: moveData.pieces,
+                        take  : true,
+                        score1: game.players[1].score,
+                        score2: game.players[2].score };
+
+      game.moves.push(recordOfMove);
+
+      // remove player from fromSquare
+      fromSquare._emptySquare();
+      toSquare._populateSquare();
+
+      // wipe at the end
+      fromSquare.selected = false;                                    // move this to a clear function ()
+      fromSquare.king = false;
+      fromSquare.occupied = false;
+      fromSquare.player = null;
+      fromSquare.availableMoves = [];
+
+      // sanity check at the end
+      fromSquare._sane();
+      toSquare._sane();
+    },
   };
   /*
    * Player
@@ -108,6 +187,7 @@ $(document).ready(function() {
    *  _isBlocked  : returns true if you can not move the piece
    *  _pieceDirection : returns the direction a piece moves (+/- 1)
    *  _playable : returns true if moves are available
+   *  _active : returns true if highlit
    *
    *  _highlightAvailableMoves() : highlights available moves - this should probably go to a larger scope
    *
@@ -121,6 +201,8 @@ $(document).ready(function() {
     /* modify function: if you update a square it should check if sane, */
     var self = this;
     self.name = name;
+    self.king1 = false;
+    self.king2 = false;
     self.selected = false;
     self.availableMoves = [];
   }
@@ -150,6 +232,16 @@ $(document).ready(function() {
       }
     },
 
+    _active: function() {
+      var self = this;
+      return $('#'+self.name).hasClass('highlight');
+    },
+
+    _checkKing: function(game) {
+      var thisSquare = this;
+      return ( (game.turn === 1) && thisSquare.king1 || (game.turn === 2) && thisSquare.king2);
+    },
+
     _occupy: function() {
       var self = this;
       self.occupy = true;
@@ -171,56 +263,76 @@ $(document).ready(function() {
       return self.availableMoves.length !== 0;
     },
 
-    _highlightAvailableMoves: function() {
-      var self = this;
-
-    _highlightAvailableMoves : function(moves) {
-      for (var move = 0; move < moves.length; move++) {
-        if (moves[move] !== false) {
-          moves[move].addClass('highlight')
-        };
-      };
-    },
-
-      console.log(self.availableMoves);
-
-
-
-
-    },
-
     _populateSquare: function() {
-      var self = this;
-      if (self.occupied) {
-        if (self.player === 1) {
-          $('#'+self.name).append('<div class="piece_1"></div>');
-        } else if (self.player === 2) {
-          $('#'+self.name).append('<div class="piece_2"></div>');
+      var thisSquare = this,
+          error_msg  = 'Error. '+thisSquare.name+' is not occupied.';
+
+      if (thisSquare.occupied) {
+        if (thisSquare.player === 1) {
+          thisSquare.king ? $('#'+thisSquare.name).append('<div class="piece_1">K</div>') : $('#'+thisSquare.name).append('<div class="piece_1"></div>');
+        } else if (thisSquare.player === 2) {
+          thisSquare.king ? $('#'+thisSquare.name).append('<div class="piece_2">K</div>') : $('#'+thisSquare.name).append('<div class="piece_2"></div>');
         }
       } else {
-        /* not occupied */
-        $('#'+self.name).children().remove();
-      return false;
+        alert(error_msg);
+        $('#'+thisSquare.name).children().remove();
+        return false;
       };
+    },
+
+    _findMoveBySquareId: function(targetSquareId) {
+      var thisSquare = this,
+          allMoves = thisSquare.availableMoves;
+
+      for (var move in thisSquare.availableMoves) {
+        if (allMoves[move].squareID === targetSquareId) {
+          return allMoves[move];
+        };
+      };
+
+      return false;
+    },
+
+    _emptySquare: function() {
+      var thisSquare = this,
+          error_msg = 'Error.  This cell is not populated!'
+
+      thisSquare.occupied ? $('#'+thisSquare.name).empty() : alert(error_msg);
     },
 
     _pieceDirection: function() {
-      var self = this,
-          kingModifier = self.king ? -1 : 1,
-          direction = (self.player === 1) ? 1 : -1;
+      var thisSquare = this,
+          kingModifier = thisSquare.king ? -1 : 1,
+          direction = (thisSquare.player === 1) ? 1 : -1;
 
       return direction * kingModifier;
     },
 
-    _construct: function(origin_x, origin_y, x_step, y_step, step) {
-      var self = this,
-          next_x = origin_x + x_step,
-          next_y = origin_y + y_step,
-          move = { step: step };
+    _constructMoves: function(coords, x_step, y_step, step, pieces) {
+      var self    = this,
+          next_x  = coords.col + x_step,
+          next_y  = coords.row + y_step,
+          take    = false;
 
       if ((next_x <= 8 && next_x >= 1) && (next_y >= 1 && next_y <= 8)) {
-        move.squareID = "c"+next_x+"r"+next_y;
+        if (step > 1) {
+          take    = true;
+          pieces  = pieces;
+       };
+
+      move = {  squareID    : "c"+next_x+"r"+next_y,
+                step        : step,
+                xDirection  : x_step,
+                yDirection  : y_step,
+                coords      : { col : next_x, row : next_y },
+                next_x      : next_x,     // needed ?
+                next_y      : next_y,     // needed ?
+                take        : take,
+                pieces      : pieces
+              };
+
         return move;
+
       } else {
         return false;
       };
@@ -233,32 +345,11 @@ $(document).ready(function() {
     },
 
     _evaluateMoves: function(board, p) {
-      var self = this,
+      var thisSquare = this,
           squaresToCheck = [],
-          x_dir = self._pieceDirection(),
+          x_dir = thisSquare._pieceDirection(),
           y_dir = [1, -1],
           step = 1;
-
-
-      /* avialabel moves will have to be a litle more complicated
-       * currently it is an array
-       *
-       * it shoudl be an obkect
-       *
-       * [ { move:
-       *     step:
-       *     jump: }
-      var checkJump = function() {
-        console.log(y_dir);
-        console.log(step);
-      }
-
-
-          // if it does change the squares 'playable' to true
-          //
-          // add an array << moves
-          //
-          // moves is populated by another call
 
       /*
        * look at where i am
@@ -279,41 +370,44 @@ $(document).ready(function() {
        * i go down one
        *
        */
-      if (self.player === p) {
 
+      if (thisSquare.player === p) {
         for(var y_step in y_dir) {
-          if (self._construct(self.coords.col, self.coords.row, x_dir, y_dir[y_step]) !== false) {
-            squaresToCheck.push(self._construct(self.coords.col, self.coords.row, x_dir, y_dir[y_step], step));
+          if (thisSquare._constructMoves(thisSquare.coords, x_dir, y_dir[y_step]) !== false) {
+            squaresToCheck.push(thisSquare._constructMoves(thisSquare.coords, x_dir, y_dir[y_step], step));
           };
         }
 
-        if (squaresToCheck.length === 0) {    // escape clause
-          // self.moves = moves
-        } else {                              // recursive check again
-          for(var square in squaresToCheck) {
-            scope = board[squaresToCheck[square].squareID];
-            if ( scope._occupiedByPlayer(p) ) {
-              squaresToCheck.splice(square, 1)
-            } else if ( scope._occupiedByOpponent(p) ) {
-              squaresToCheck.splice(squareName, 1);
-              console.log(scope);
-               // checkForJump();
-               //   ++ add a step to the squaesToCheck but (189 y_dir.each + 1)
-            } else {
-              self.availableMoves.push(squaresToCheck[square].squareID);
+        var exit = squaresToCheck.length;
+        var square = 0; // change to index
+        while (square < exit) {
+          var pieces = [];
+          step = 1;
+          scope = board[squaresToCheck[square].squareID];
+
+          if ( scope._occupiedByPlayer(p) || (scope._occupiedByOpponent(p) && (step % 2 === 0) ) ) {
+            // do nothing
+          } else if ( scope._occupiedByOpponent(p) ) {
+            step = step + 1;
+            if (step % 2 === 0) {     // single jump
+              y_dir = scope.coords.row - thisSquare.coords.row;
+              if (thisSquare._constructMoves(scope.coords, x_dir, y_dir, step)) {
+                pieces.push(scope.name);
+                squaresToCheck.push(thisSquare._constructMoves(scope.coords, x_dir, y_dir, step, pieces));
+                exit = exit + 1;
+              };
+            } else {                   // for now for double jump
+
             };
+          } else {                                                                    // has a move
+          thisSquare.availableMoves.push(squaresToCheck[square]);
+        };
 
-          }; /* for loop */
-        }
+        square = square + 1;  // increment loop;
+        };  /* eo while (square < exit) loop */
       };
-      self._sane();
-
-      // console.log(self.availableMoves);
+      thisSquare._sane();
     },
-
-
-
-
   };
 
   Checkers.prototype = {
@@ -344,21 +438,50 @@ $(document).ready(function() {
       };
     },
 
-    _smartConsole : function(params) {
-/*
- *    Use like this:
-      params = {legal: legal, pieces: pieces};
-      self._smartConsole(params);
-*/
-      var self = this;
-      for (var v in params) {
-        if (params.hasOwnProperty(v)) {
-          console.log(v);
-          console.log("======");
-          console.log(params[v]);
-          console.log("\n")
-        };
+    _movePieces: function(board, squares) {
+      var thisGame    = this,
+          score       = 0,
+          totalScore  = 0;
+
+      for(var square in squares) {
+
+        board[squares[square]]._emptySquare();
+
+        var score = 1;
+
+        if (board[squares[square]].king) { var score = score + 2 }
+
+        var opponent = board[squares[square]].player;
+
+        board[squares[square]].player = null;
+        board[squares[square]].availableMoves = [];
+        board[squares[square]].occupied = false;
+
+        totalScore = totalScore + score;
       };
+
+      var player = (opponent === 1) ? 2 : 1;
+
+      thisGame.players[player].score = thisGame.players[player].score + totalScore;
+      thisGame._updateScore();
+    },
+
+    _updateScore: function() {
+      var thisGame = this;
+
+      console.log("\n\n\n\nScore:");
+      console.log("Player1: " + thisGame.players[1].score + ". Player2: " + thisGame.players[2].score + "\n\n\n");
+    },
+    _opponent: function(player) {
+      var opponent = (player === 1) ? 2 : 1;
+      return opponent;
+    },
+
+    _clearEvaluatedMoves: function(board) {
+      var clearFunc = function(square) {
+        square.availableMoves = [];
+      };
+      this._evalSquareFunction(board, clearFunc);
     },
 
     _toggleBoard: function(state) {
@@ -368,11 +491,13 @@ $(document).ready(function() {
 
     _buildGameBoard: function() {
       var self = this;
-      var gameBoard = {};
       var rows = 8;
       var cols = 8;
       var legal = false;
       var board = {};
+
+
+      var gameBoard = new Board();
 
       self.$body.toggleClass('playing');            /* routes the screen to play mode */
 
@@ -396,16 +521,25 @@ $(document).ready(function() {
           $('#r'+r).append(square);
           // $('#'+square_name).data( "coords", { row: r, col: c } );    /* deprecate ? */
 
-          if ((c <= 3) && (legal)) {
+          if ((c <= 3) && (legal)) {  // move to an initialize function
+            if ( (c === 1) && (legal) ) {
+              gameBoard[square_name].king2 = true;
+            };
             gameBoard[square_name].player = 1;
+            gameBoard[square_name].active = false;
             gameBoard[square_name].occupied = true;
             gameBoard[square_name].king = false;
             gameBoard[square_name]._populateSquare();
             gameBoard[square_name]._sane();
           } else if ((c >= 6) && (legal)) {
+            if ( (c === 8) && (legal) ) {
+              // like... new square (king) vs new square no king)
+              gameBoard[square_name].king1 = true;
+            };
             gameBoard[square_name].player = 2;
             gameBoard[square_name].occupied = true;
             gameBoard[square_name].king = false;
+            gameBoard[square_name].active = false;
             gameBoard[square_name]._populateSquare();
             gameBoard[square_name]._sane();
           };
@@ -414,8 +548,8 @@ $(document).ready(function() {
         legal = !legal;
       };
 
-      // console.log(gameBoard);
-      self._game(gameBoard, 1);
+      self.turn = 1;
+      self._playerTurn(gameBoard);
 
     },
 
@@ -427,241 +561,87 @@ $(document).ready(function() {
       $square.toggleClass('selected');
     },
 
-    _evaluatePlayerMoves: function(board, player) {
-      var self = this;
-      console.log('\nEvaluating moves for player: '+ player);
+    // send functions here to operate on individual squares
+    _evalSquareFunction: function(board, callbackFunc) {
+      var self = this,
+          player = self.turn;
 
       for (var square in board) {
+
         if (board.hasOwnProperty(square)) {
-          if (board[square]._occupiedByPlayer(player)) {
-            board[square]._evaluateMoves(board, player);
-          // if it is then check if it has any moves
+          if ((square !== "currentSquare") && (board[square].legal_space === "legal")) {    // should be a boolean value
+            if (board[square]._occupiedByPlayer(player)) {
+
+              callbackFunc(board[square]);
+            };
           };
         };
       };
-
     },
 
-    _game : function(gameBoard, player) {
-      var self = this;
-      var $squares = $('.square');
+    _evaluatePlayerMoves: function(board) {
+      var thisGame  = this,
+          player    = thisGame.turn,
+          evaluateMovesFunc = function(square) {
+            square._evaluateMoves(board, player);
+          };
 
-      self._evaluatePlayerMoves(gameBoard, player);       // start the turn by populating available moves
+      this._evalSquareFunction(board, evaluateMovesFunc);
+    },
+
+    _playerTurn : function(gameBoard) {
+      var thisGame = this,
+          $squares = $('.square');
+
+      console.log("\nNew turn\nPlayer: " + thisGame.turn);
+
+      thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
 
       // if (player 1 !== 'cpu') { } // add this line here
-
-
-
       /* note - game has just STARTED -- it should say it is anticipating an action */
 
       $squares.on("click", function(evt) {
-        var self              = this,
-            targetSquareName  = evt.currentTarget.id,
-            targetSquare      = gameBoard[targetSquareName];
+        var targetSquare = gameBoard[evt.currentTarget.id];
+        console.log(targetSquare);
 
-/*
-        selected the square.
+        if ( !targetSquare._active() ) {
 
-
-        does the square have a piece? && moves are available?
-          yes
-            highlight next moves
-
-          no?
-            clear all highlights
-*/
-        if (targetSquare._occupiedByPlayer(player)) {
-          // self._clearAllHighlights();
-          console.log(targetSquare);
-          targetSquare._highlightAvailableMoves();
-
-          // var availableMoves = [];
-          // self._highlightAvailableMoves(availableMoves);
+          if ( (targetSquare._occupiedByPlayer(thisGame.turn)) && (targetSquare.availableMoves.length > 0) ){
+            gameBoard._clearHighlights();
+            gameBoard._highlightAvailableMoves(targetSquare);
+          } else {                              // targetSquare is not active or clickable - clear
+            gameBoard._clearHighlights();
+          };
         };
 
+        if (targetSquare._active()) {                     // target square is clickable - move
+          gameBoard._initiateMove(targetSquare, thisGame);
+          thisGame._clearEvaluatedMoves(gameBoard);
+          gameBoard._clearHighlights();
 
+          if (thisGame._proceed()) {
+            thisGame.turn = (thisGame.turn === 1) ? 2 : 1;
 
-        /* if it is playable (legal should be boolean), then you can add selected to the
-         * if it is not you must do nothing ??
-         * ???
-         * OR
-         * ???
-         * clear selected
-         */
-
-      /* this is a bug.  it says: if ther is anything selected anywhere, it becomes previous selected */
-      /* and it toggles to clear the selected.  you could just say: if there s a previous selected, clear
-         clear selected */
-      /* is that what you want to do?  to clear the selected? */
-
-      /* GOT IT: this exists because it is using it to dumbly move from prev selected to new selected */
-
-        if ($('.selected').length !== 0) {
-        //  var $previousSelected = self._constructId($('.selected')[0].id);
-        //  self._toggleSelectedSquare($previousSelected);
-        };
-/*
-        var $squareClicked = self._constructId(evt.currentTarget.id);
-
-
-        self._toggleSelectedSquare($squareClicked);
-
-        if ( self._squareIsOccupiedBySelf($squareClicked, player) ) {
-          self._clearAllHighlights();
-          var availableMoves = [];
-          availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_1", 1, player));
-          availableMoves.push(self._evaluateNextMove($squareClicked, "rowPath_2", 1, player));
-          self._highlightAvailableMoves(availableMoves);
+            // new turn
+            console.log("\nNew turn\nPlayer: " + thisGame.turn);
+            thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
+          } else {
+            thisGame._gameOver();
+          };
         };
 
-        if ( self._moveWithoutTake($squareClicked) ) {
-          player = self._moveSquare( $squareClicked, $previousSelected, player, { take: false } );
-        };
-
-        if ( self._moveWithTake($squareClicked) ) {
-          player = self._moveSquare( $squareClicked, $previousSelected, player, { take: true } );
-        };
-*/
       });
     },
 
-    _clearAllHighlights : function() {
-      $('.square').removeClass('highlight');
-    },
-
-    _moveSquare: function($targetDiv, $prevDiv, player, options) {
+    _proceed: function() {
       var self = this;
-      $prevDiv.toggleClass(player);
-      $targetDiv.toggleClass(player);
-      self._toggleSelectedSquare($targetDiv);
-      self._clearAllHighlights();
-
-      if (options.take) {
-        data = $targetDiv.data();
-        $div = $("#"+data.take);
-        $div.toggleClass("take");
-        $div.toggleClass(self._opponentOf(player));
-      };
-
-      self._sanityCheck();
-
-      return (player === "player_1") ? "player_2" : "player_1";
+      opponent = (self.turn === 1) ? 2 : 1;
+      return true;
     },
 
-    /* TODO: note that this algorithm is not taking into account king'd pieces */
-    _evaluateNextMove : function(square, rowPath, depth, player) {
-      if (depth < 3) {
-        var self = this;
-        /* to take king into consideration make a func like:
-         * directionColumn = leftOrRight($square, player);
-         * if player is 1 and not king || player 2 and king = +1
-         * else -1
-         * */
-        var directionColumn = (player === 1) ? 1 : -1;
-        var directionRow = (rowPath === "rowPath_1") ? 1 : -1;
-        var targetCol = square.coords.col + (directionColumn * depth);
-        var targetRow = square.coords.row + (directionRow * depth);
-        var $targetSquare = self._constructCoords(targetCol, targetRow);
-
-        if ( self._squareIsLegalAndEmpty($targetSquare) && depth === 1 ) {
-          return $targetSquare;
-        };
-
-        if ( self._squareIsLegalAndEmpty($targetSquare) && depth > 1 ) {
-          var jumpCol = coords['col'] + directionColumn;
-          var jumpRow = coords['row'] + directionRow;
-          $jumpSquare = self._constructCoords(jumpCol, jumpRow);
-          self._flagSquareForTake($targetSquare, $jumpSquare);
-          return $targetSquare;
-        };
-
-        if (self._squareIsOccupiedByOpponentUnderMaxDepth($targetSquare, player, depth, 3)) {
-          depth = depth + 1;
-          return this._evaluateNextMove($square, rowPath, depth, player);
-        };
-
-        return false;
-      };
-    },
-
-    _flagSquareForTake : function($newSquare, $jumpedSquare) {
-                         /* bug with take.  line 189 is problem. shouldn't need a class. take never changes style. just the data. remove data after take */
-      $newSquare.addClass("take");
-      $newSquare.data("take", $jumpedSquare.attr("id"));
-    },
-
-    _constructCoords : function(column, row) {
-      $div = $("#c"+column+"r"+row);
-      return $div
-    },
-
-    _constructId : function(name) {
-      $div = $("#"+name);
-      return $div;
-    },
-
-    _squareIsLegal : function($targetDiv) {
-      return ($targetDiv.hasClass("legal"));
-    },
-
-    _squareIsLegalAndEmpty : function($targetDiv) {
+    _gameOver: function() {
       var self = this;
-      return ( self._squareIsLegal($targetDiv) && !($targetDiv.hasClass("player_1")) && !($targetDiv.hasClass("player_2")) );
-    },
-
-    _squareIsLegalAndOccupied : function($targetDiv) {
-      var self = this;
-      return ( self._squareIsLegal($targetDiv) && ($targetDiv.hasClass("player_1") || $targetDiv.hasClass("player_2")) );
-    },
-
-    _squareIsLegalMove : function($targetDiv) {
-      return ($targetDiv.hasClass("highlight"));
-    },
-
-    _squareIsSelected : function($targetDiv) {
-      return ($targetDiv.hasClass("selected"));
-    },
-
-    _squareIsOccupiedBySelf : function($targetDiv, player) {
-      return ($targetDiv.hasClass(player));
-    },
-
-    _squareIsOccupiedByOpponent : function($targetDiv, thisPlayer) {
-      var opponent = (thisPlayer === "player_1" ) ? "player_2" : "player_1";
-      return ($targetDiv.hasClass(opponent))
-    },
-
-    _squareIsOccupiedByOpponentUnderMaxDepth : function($targetDiv, thisPlayer, depth, maxDepth) {
-      var self = this;
-      return ( self._squareIsOccupiedByOpponent($targetDiv, thisPlayer) && (depth < maxDepth) )
-
-    },
-
-    _squareIsUnplayable : function($targetDiv, player) {
-      var self = this;
-      if (!(self._squareIsLegal($targetDiv))) { return true };
-      if (self._squareIsSelected($targetDiv)) { return true };
-      if (self._squareIsLegalAndOccupied($targetDiv)) { return true };
-      return false;
-    },
-
-    _moveWithoutTake : function($targetDiv) {
-      return ( $targetDiv.hasClass("highlight") && !($targetDiv.hasClass("take")) );
-    },
-
-    _moveWithTake : function($targetDiv) {
-      return ( $targetDiv.hasClass("highlight") && $targetDiv.hasClass("take") );
-    },
-
-    _opponentOf : function(player) {
-      return (player === "player_1") ? "player_2" : "player_1";
-    },
-
-    _sanityCheck : function() {
-      var self = this;
-      $('.illegal').removeClass('player_1');
-      $('.illegal').removeClass('player_2');
-      self._clearAllHighlights();
+      alert("Game over.  You win!");
     },
 
   }; /* end of Checkers.prototype */
