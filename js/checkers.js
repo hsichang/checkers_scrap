@@ -29,16 +29,7 @@ $(document).ready(function() {
 
 
   var Board = function() {
-    /*
-     * Board
-     *
-     * currentSquare = square that is scoped to move
-     *
-     *
-     */
     var self = this;
-
-
   };
 
   Board.prototype = {
@@ -90,22 +81,15 @@ $(document).ready(function() {
 
       game.moves.push(recordOfMove);
 
-      // remove player from fromSquare
       fromSquare._emptySquare();
       toSquare._populateSquare();
-
-      // wipe at the end
-      fromSquare.selected = false;                                    // move this to a clear function ()
-      fromSquare.king = false;
-      fromSquare.occupied = false;
-      fromSquare.player = null;
-      fromSquare.availableMoves = [];
 
       // sanity check at the end
       fromSquare._sane();
       toSquare._sane();
     },
   };
+
   /*
    * Player
    *
@@ -295,9 +279,18 @@ $(document).ready(function() {
 
     _emptySquare: function() {
       var thisSquare = this,
-          error_msg = 'Error.  This cell is not populated!'
+          error_msg = 'Error.  This cell is not populated!';
 
-      thisSquare.occupied ? $('#'+thisSquare.name).empty() : alert(error_msg);
+      if (thisSquare.occupied) {
+        thisSquare.selected = false;
+        thisSquare.king = false;
+        thisSquare.occupied = false;
+        thisSquare.player = null;
+        thisSquare.availableMoves = [];
+        $('#'+thisSquare.name).empty();
+      } else {
+        alert(error_msg);
+      };
     },
 
     _pieceDirection: function() {
