@@ -261,7 +261,7 @@ body.lobby #lobby-container {
 
 #board {
 	height: 440px;
-	width: 424px;
+	width: 425px;
   margin: 20px auto 50px auto;
 	padding: 0px;
 	opacity: .8;
@@ -293,8 +293,8 @@ body.lobby #lobby-container {
 
     .square.legal.highlight {
       border: 2px dotted yellow;
-      width: 49px;
-      height: 51px;
+      width: 51px;
+      height: 53px;
     }
 
   .piece_1 {

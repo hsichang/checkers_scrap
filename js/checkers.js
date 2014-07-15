@@ -67,6 +67,17 @@ $(document).ready(function() {
       thisGame._playerTurn(gameBoard);
     },
 
+    _tempStart: function(thisGame) {
+      thisGame._switchWindow(ROUTE_GAME);
+      gameBoard = new Board();
+      gameBoard._drawNewBoard(thisGame)
+
+      // start game -- make an option here for one or two players
+      thisGame._playerTurn(gameBoard);
+
+    },
+
+
     _gameOver: function() {
 
     },
@@ -105,14 +116,19 @@ $(document).ready(function() {
     self.moves = [];
     self.players =  { 1 : new Player(1),
                       2 : new Player(2) };
-
-    self.router = new Router();
-
-    self.router._welcomeScreen(self);
     self.broadcastChannels = [];
     self.broadcastChannels.push(CHANNEL_LOBBY);
 
-    // self.router._startPlaying(self);  // this logic should move to route
+    self.router = new Router();
+
+
+    // self.router._startPlaying(self);  // this logic will move to route - deprecate - test only
+
+    self.router._tempStart(self) // this is still not done but i've uncommented for you to check
+
+    // self.router._welcomeScreen(self); // Matt: uncomment this to check out the beginning of chat
+
+
   };
 
   Checkers.prototype = {
@@ -146,7 +162,7 @@ $(document).ready(function() {
             if (name !== '') {
               // check if valid:
               //
-              // check if downcase ===
+              // check if downcase and don't allow:
               // "admin"
               // "Player 1"
               // "Player 2"
