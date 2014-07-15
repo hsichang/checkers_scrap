@@ -11,7 +11,7 @@
 
   <body>
 
-    <div id="main">
+    <div id="init-container">
       <div class="masthead-container">
         <h3>Hello. My name is:</h3>
       </div>
@@ -25,6 +25,7 @@
 
           <input type="button" id="submitCredentials" value="submit" />
         </form>
+
       </div><!-- .credentials-form-container -->
 
       <div id="encyclopedia">
@@ -32,9 +33,97 @@
         <h5>...that checkers is an ancient game dating back to 3000BC in the Sumerian city of Ur.</h5>
       </div><!-- #encyclopedia -->
 
-    </div><!-- #main -->
+    </div><!-- #init-container -->
 
     <div id="lobby-container">
+
+      <div class="lobby-main-chat-container"><!-- deprecate? -->
+
+        <!-- this is where the lobby chats are displayed -->
+        <div class="lobby-chat-text-holder"></div>
+
+        <div class="lobby-chat-input-container">
+
+          <form name="lobbyChatForm">
+            <div>
+              <input id="lobbyChatInputText" class="lobbyChatInputField lobbyChatInput" type="text" />
+            </div>
+
+            <div class="send-chat-button-container">
+              <div class="blue-button chat-submit-button send-lobby-chat-button">SEND CHAT</div>
+            </div>
+          </form>
+
+        </div><!-- .lobby-chat-input-container -->
+
+
+      </div><!-- .lobby-main-chat-container -->
+
+      <div class="lobby-channel-container">
+
+        <div class="lobby-channel-form-container">
+          <form name="gameRoomNameForm">
+            <input id="createGameRoomInputText" class="lobbyChatInputField lobby-create-game-room-input" type="text" placeholder="Name game room">
+            </input>
+          </form>
+
+          <div class="lobby-create-game-room-button-container">
+            <div class="blue-button chat-submit-button lobby-create-game-room-button">
+            CREATE ROOM
+            </div>
+          </div><!-- .lobby-create-game-room-button-container -->
+        </div><!-- .lobby-channel-container -->
+
+        <div class="lobby-available-channel-list-inner-container">
+          <!-- this is where the channel names are displayed -->
+          <div class="lobby-channel-room-text-holder"></div>
+        </div><!-- .lobby-available-channel-list-inner-container -->
+      </div><!-- .lobby-channel-container -->
+
+      </div><!-- .lobby-create-game-room-container -->
+
+
+      <!--
+
+          needs some way to create a game room
+          this should be relatively straightforward
+
+          build a room:
+          what's the name?
+          is the name valid?
+          OK
+          << possible time to use the overlay and modal
+
+
+          need to make the chat room say words
+
+          change the name of this from lobby-chat
+          to something like start-game-button-container
+          make this on click event switch to the game
+
+          the game needs some way of understanding who the current
+          screen's player is...
+
+          it will know the "name" so it should basically say
+          if you are not coming at me with the pubnub name
+          of player 1, then i wont' let you touch this screen
+
+          so maybe just add a self.name to player
+
+          if pubnub name === player name then you're free to go
+
+
+          -->
+      <!--
+        <div class="lobby-chat-button-container">
+          <div class="blue-button">START GAME</div>
+        </div>
+      -->
+
+      <div class="close-chat-button-container">
+        <div class="blue-button close-chat-button">CLOSE CHAT</div>
+      </div>
+
 
 
     </div><!-- #lobby-container -->

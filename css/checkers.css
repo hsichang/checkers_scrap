@@ -1,65 +1,231 @@
 body {
+	background-color: blue;
+	background: url('../images/ur2.png');
+	background-position: center;
+	background-attachment: fixed;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+  background-size: cover;
+
   background-color: #FAFAFA;
 }
 
-body.playing {
-	background-color: blue;
-	background: url('../images/ur2.png');
-	background-position: center;
-	background-attachment: fixed;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-  background-size: cover;
+/* maybe add a dark screen for modal pop ups? */
+
+/* welcome */
+body.welcome #init-container {
+  display: block;
 }
-  body.playing #main {
-    display: none;
-  }
 
+#init-container {
+  width: 650px;
+  margin: auto;
 
-body.welcome {
-	background-color: blue;
-	background: url('../images/ur2.png');
-	background-position: center;
-	background-attachment: fixed;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-  background-size: cover;
+  display: none;
 }
-  body.welcome #game-displays {
-    display: none;
-  }
-  body.welcome #board-container {
-  /*  display:none; */
-  }
-  body.welcome #board {
-    display: none;
-  }
-  body.welcome #main {
-    display: block;
-    width: 650px;
-    margin: auto;
-  }
 
-body.
-
-
-input[type=text]{
-	width: 600px;
-	font-family: Helvetica, Arial, sans-serif;
-	font-size: 60px;
-  padding: 30px;
-  border-radius: 15px;
-}
+/* in play */
 
 body.playing #board-container {
-  display: none;
-  width: 100%;
+  display: block;
 }
-  body.playing.playing #board-container {
-    display: block;
+
+body.playing #board {
+  display: block;
+}
+
+
+/* lobby */
+body.lobby #lobby-container {
+  display: block;
+}
+  #lobby-container {
+    display: none;
   }
+
+  .lobby-main-chat-container {
+    width: 350px;
+    height: 450px;
+    margin: 50px auto 0;
+    padding: 25px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid #FAFAFA;
+
+    font-family: helvetica, arial, sans-serif;
+    font-size: 30px;
+    color: #000;
+  }
+
+  .close-chat-button-container {
+    width: 400px;
+    text-align: center;
+    margin: 25px auto;
+  }
+
+  .send-chat-button-container {
+    position: relative;
+    top: -40px;
+    left: 265px;
+    line-height: 34px;
+  }
+
+  input[type=text].lobbyChatInputField {
+    width: 240px;
+    font-size: 18px;
+    padding: 5px;
+    border-radius: 3px;
+  }
+
+  .blue-button.chat-submit-button {
+    height: 33px;
+    width: 85px;
+    line-height: 34px;
+    border-radius: 0px;
+  }
+
+  input[type=text].lobbyChatInputField.lobbyChatInput {
+    width: 248px;
+    font-size: 18px;
+    padding: 5px;
+    border-radius: 0px;
+    position: relative;
+    top: -1px;
+    height: 22px;
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+
+  .lobby-chat-input-container {
+    position: absolute;
+    top: 488px;
+  }
+
+  .lobby-chat-text-holder {
+    width: 320px;
+    height: 360px;
+    background-color: #FFF;
+    border: 1px solid rgba(0,0,0,0.7);
+    color: #000;
+    font-family: helvetica, arial, sans-serif;
+    font-size: 14px;
+    padding: 15px;
+    overflow-y: scroll;
+  }
+    .chat-alert-new-guest {
+      color: #4D4D4D;
+      font-style: italic;
+    }
+    .chat-normal-text {
+      margin-bottom: 10px;
+
+    }
+    /* create spans so names are a different color than text */
+
+  .lobby-create-game-room-button-container {
+    position: relative;
+    top: 8px;
+    left: 0px;
+  }
+
+  input[type=text].lobbyChatInputField.lobby-create-game-room-input {
+    width: 150px;
+  }
+
+  .blue-button.chat-submit-button.lobby-create-game-room-button {
+    width: 110px;
+    position: relative;
+    top: -48px;
+    left: 167px;
+    line-height: 34px;
+    height: 33px;
+  }
+
+  .lobby-create-game-room-container {
+    position: relative;
+    top: 0px;
+    left: 0px;
+  }
+
+  .chat-room-button-container {
+    position: relative;
+    top: 0px;
+    left: 0px;
+  }
+
+  input[type=text].lobbyCreateGameRoomInput {
+    width: 240px;
+    font-size: 18px;
+    padding: 5px;
+    border-radius: 3px;
+  }
+
+  .lobby-channel-room-text-holder {
+    width: 246px;
+    height: 133px;
+    background-color: #FFF;
+    border: 1px solid rgba(0,0,0,0.7);
+    color: #000;
+    font-family: helvetica, arial, sans-serif;
+    font-size: 14px;
+    padding: 15px;
+    overflow-y: scroll;
+    position: relative;
+    top: -80px;
+    left: -1px;
+  }
+
+  .lobby-channel-container {
+    width: 277px;
+    height: 209px;
+    padding: 25px;
+
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid #FAFAFA;
+
+    font-family: helvetica, arial, sans-serif;
+    font-size: 30px;
+    color: #000;
+
+    position: relative;
+    top: -260px;
+    left: 25px;
+  }
+
+
+  .lobby-channel-form-container {
+    position: relative;
+    top: 177px;
+    left: -2px;
+  }
+
+
+
+
+
+  /*
+   * names should be their own color
+   * events (someone joining or leaving) should be their own color
+   * also somebody creating a room
+   *
+   * <p> in the chat should have top and bottom gray border
+   * names should start broadcasts
+   */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -81,12 +247,15 @@ body.playing #board-container {
   width: 100%;
 }
 
-#game {
-	margin: 80px auto 0 auto;
-	text-align: center;
+/* board */
+
+#board-container {
+  display: none;
 }
 
-/* board */
+#game-displays {
+  display: none;
+}
 
 #board {
 	height: 440px;
@@ -95,37 +264,36 @@ body.playing #board-container {
 	padding: 0px;
 	opacity: .8;
   border: 3px solid #000;
-}
 
-.row {
-  height: 55px;
+  display: none;
 }
-
-.row:after {
-  clear: both;
-}
-
-.square {
-  width: 53px;
-  height: 55px;
-  padding: 0;
-  margin: 0;
-  float: left;
-}
-
-  .square.legal {
-    background-color: rgba(0,0,0,0.77);
+  .row {
+    height: 55px;
+  }
+  .row:after {
+    clear: both;
   }
 
-  .square.illegal {
-    background-color: rgba(255,255,255,0.34);
+  .square {
+    width: 53px;
+    height: 55px;
+    padding: 0;
+    margin: 0;
+    float: left;
   }
+    .square.legal {
+      background-color: rgba(0,0,0,0.77);
+    }
 
-  .square.legal.highlight {
-    border: 2px dotted yellow;
-    width: 49px;
-    height: 51px;
-  }
+    .square.illegal {
+      background-color: rgba(255,255,255,0.34);
+    }
+
+    .square.legal.highlight {
+      border: 2px dotted yellow;
+      width: 49px;
+      height: 51px;
+    }
 
   .piece_1 {
     border-radius: 50%;
@@ -200,8 +368,27 @@ body.playing #board-container {
 }
 
 
-.clear {
-  clear: both;
+.masthead-container {
+  margin: 50px 0 15px 25px;
+}
+
+
+
+
+
+
+
+
+/* End of Lobby */
+
+/* Assets */
+
+input[type=text]{
+	width: 600px;
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 60px;
+  padding: 30px;
+  border-radius: 15px;
 }
 
 h3 {
@@ -210,7 +397,51 @@ h3 {
   margin: 0px;
 }
 
-.masthead-container {
-  margin: 50px 0 15px 25px;
-
+.clear {
+  clear: both;
 }
+
+.blue-button {
+  background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #79bbff), color-stop(1, #378de5) );
+  background:-moz-linear-gradient( center top, #79bbff 5%, #378de5 100% );
+  filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#79bbff', endColorstr='#378de5');
+  background-color:#79bbff;
+  -webkit-border-top-left-radius:6px;
+  -moz-border-radius-topleft:6px;
+  border-top-left-radius:6px;
+  -webkit-border-top-right-radius:6px;
+  -moz-border-radius-topright:6px;
+  border-top-right-radius:6px;
+  -webkit-border-bottom-right-radius:6px;
+  -moz-border-radius-bottomright:6px;
+  border-bottom-right-radius:6px;
+  -webkit-border-bottom-left-radius:6px;
+  -moz-border-radius-bottomleft:6px;
+  border-bottom-left-radius:6px;
+  text-indent:0;
+  display:inline-block;
+  color:#ffffff;
+  font-family:Arial;
+  font-size:12px;
+  font-weight:bold;
+  font-style:normal;
+  height:45px;
+  line-height:45px;
+  width:130px;
+  text-decoration:none;
+  text-align:center;
+  text-shadow:0px 2px 0px #528ecc;
+}
+
+.blue-button:hover {
+  background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #378de5), color-stop(1, #79bbff) );
+  background:-moz-linear-gradient( center top, #378de5 5%, #79bbff 100% );
+  filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#378de5', endColorstr='#79bbff');
+  background-color:#378de5;
+}
+
+.blue-button:active {
+  position:relative;
+  top:1px;
+}
+

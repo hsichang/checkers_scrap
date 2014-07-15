@@ -1,12 +1,16 @@
 // checklist:
 //
+// Chat
+// Lobby
+// Create Room
+// Start remote game
+// Admin panel for hidden buttons like 'clear'
+//
 // Double Jump
 // Scoreboard
 // fix score bug
 // Piece counter
 // Game over
-// Lobby
-// Chat
 // Single Player
 // PubNub : http://www.pubnub.com/docs/javascript/tutorial/quick-start.html
 
@@ -14,7 +18,28 @@
 $(document).ready(function() {
   var ROUTE_WELCOME = 'welcome',
       ROUTE_LOBBY   = 'lobby',
-      ROUTE_GAME    = 'playing';
+      ROUTE_GAME    = 'playing',
+
+      CHANNEL_LOBBY = { name_system : 'changoCheckersLobby',
+                        name_public : 'Lobby'
+                      },
+      BROADCAST_PUBLIC = 'public',
+      BROADCAST_SYSTEM = 'system',
+
+      NEW_GUEST_STYLE = 'chat-alert-new-guest';
+
+
+
+
+
+
+      // deprecate
+  var trace = function() { console.log('\n\nTRACE\n\n') };
+
+
+
+
+
 
   var Router = function() {
     var thisRouter = this;
@@ -25,17 +50,28 @@ $(document).ready(function() {
       var thisRouter = this;
 
       thisGame._switchWindow(ROUTE_WELCOME);
-      thisGame._bindWelcomeClickEvents(thisGame);
+      thisGame._bindWelcomeClickEvents();
     },
 
     _lobby: function(thisGame, name) {
-              // should _switchWindow have a callback function?
+      var message = { channel     : CHANNEL_LOBBY,
+                      message     : "\> " + thisGame.thisPlayerName + ' has entered the lobby.',
+                      callbackDiv : 'lobby-chat-text-holder' };
+
       thisGame._switchWindow(ROUTE_LOBBY);
-      console.log(name);
+      thisGame._pubnubInit(); // deprecate ?
+      thisGame._broadcastManager(CHANNEL_LOBBY); // here
+      thisGame._bindLobbyEvents(name);
     },
 
     _startPlaying: function(thisGame) {
-      var thisRouter = this;
+      // all of this should be a new page
+      // or a page with a deep link so user
+      // can refresh the page
+      // not a _blank either, for mobile ...
+      // or something
+
+      thisGame.$sendToChatLobby.unbind('click', sendToLobbyChatHandler);
       thisGame._switchWindow(ROUTE_GAME);
       gameBoard = new Board();
       gameBoard._drawNewBoard(thisGame)
@@ -67,22 +103,27 @@ $(document).ready(function() {
     self.$player_1_move = $('#move_player_1');
     self.$player_2_move = $('#move_player_2');
     self.$debugSquareDisplay = $('#debug-display-square');
+
+    /* lobby */
+    self.$lobbyWindow = $('.lobby-chat-text-holder');
+    self.$closeChat = $('.close-chat-button');
+    self.$lobbyChatInput = $('#lobbyChatInputText');
+    self.$sendToChatLobby = $('.send-lobby-chat-button');
+    self.$lobbyChatView = $('.lobby-chat-text-holder');
+
     self.players = {};
     self.turn = null;
     self.moves = [];
     self.players =  { 1 : new Player(1),
                       2 : new Player(2) };
 
-    self.pubnub = PUBNUB.init({
-      publish_key: 'demo',
-      subscribe_key: 'demo'
-    });
-
     self.router = new Router();
 
-    //self.router._welcomeScreen(self);
+    self.router._welcomeScreen(self);
+    self.broadcastChannels = [];
+    self.broadcastChannels.push(CHANNEL_LOBBY);
 
-    self.router._startPlaying(self);
+    // self.router._startPlaying(self);  // this logic should move to route
   };
 
   Checkers.prototype = {
@@ -106,14 +147,86 @@ $(document).ready(function() {
       this.$body.toggleClass(ROUTE);
     },
 
-    _bindWelcomeClickEvents : function(thisGame) {
-      thisGame.$submitName.on('click', function(evt){
-        var name = thisGame.$playerName.val();
+    _bindWelcomeClickEvents : function() {
+      var thisGame = this,
 
-        evt.preventDefault();
-        thisGame.$playerName.val('');
-        thisGame.router._lobby(thisGame, name);
+          submitNameHandler = function(evt) {
+            evt.preventDefault();
+            var name = thisGame.$playerName.val()
+
+            if (name !== '') {
+              // check if valid:
+              //
+              // check if downcase ===
+              // "admin"
+              // "Player 1"
+              // "Player 2"
+              // "Sysadmin"
+              // user
+              // user 1
+              // user 2
+              // CPU
+              // computer
+              // Chang === there can be only one
+              thisGame.$playerName.val('');
+              thisGame.thisPlayerName = name;
+
+              thisGame.router._lobby(thisGame, name);
+              thisGame.$submitName.unbind('click');
+            } else if (name === '') {
+              // surface modal error.  Alert for now
+              alert('Please enter a username in order to play checkers with chat.')
+            }; // else if name is not valid - surface error here
+          };
+
+      thisGame.$submitName.bind('click', submitNameHandler);
+      thisGame.$body.on('keypress', thisGame.$submitName, function(args) {
+        if (args.keyCode === 13) {
+          thisGame.$submitName.click();
+          return false;
+        };
       });
+    },
+
+    _bindLobbyEvents: function(name) {
+      var thisGame  = this,
+          message   = {},
+
+      // make this into reusable functions at highest level
+      unsubscribeFromChatHandler = function(evt) {
+        evt.preventDefault();
+        thisGame._unsubscribeFromChat(CHANNEL_LOBBY);
+      },
+
+      sendToLobbyChatHandler = function(evt) {
+        evt.preventDefault();
+
+        msg = thisGame.$lobbyChatInput.val();
+        if (msg !== '') {
+          message = { channel     : CHANNEL_LOBBY,
+                      message     : '> ' + thisGame.thisPlayerName + ': ' + msg,
+                      style       : NEW_GUEST_STYLE,
+                      audience    : BROADCAST_PUBLIC,
+                      callbackDiv : 'lobby-chat-text-holder'
+                    }
+          thisGame._broadcastMessage(message);
+          thisGame.$lobbyChatInput.val('');
+        };
+      };
+
+      thisGame.$closeChat.bind('click', unsubscribeFromChatHandler);
+
+      thisGame.$sendToChatLobby.bind('click', sendToLobbyChatHandler);
+
+      thisGame.$lobbyChatInput.on('keypress', thisGame.$sendToChatLobby, function(args) {
+        if (args.keyCode === 13) {
+          thisGame.$sendToChatLobby.click();
+          return false;
+        };
+      });
+
+      // dont forget to unbind these events after the lobby is
+      // exited
     },
 
     _movePieces: function(board, squares) {
@@ -165,25 +278,83 @@ $(document).ready(function() {
       };
     },
 
-    _subscribeToChatChannel: function(channel) {
+    _broadcastManager: function(channel) {
       var thisGame = this;
-      thisGame.pubnub.subscribe({                          // initialize chat here
-        channel: 'a',
-        message: function(m) {
-          console.log(m)
-        }
+
+      thisGame.pubnub.subscribe({
+        channel: channel.name_system,
+        message: thisGame._receiveBroadcast,
+        heartbeat: 30 // timeout before unsubscribe in seconds
+      });
+
+      thisGame._getUserListByChannel(channel);
+    },
+
+    _receiveBroadcast : function(message) {
+            console.log(message);
+      var thisGame = this,
+          printMessage = function(message) {
+
+            var $targetDiv = $('.' + message.callbackDiv)
+            console.log($targetDiv);
+            console.log(message.message);
+            console.log(message);
+
+            jQuery('<div/>', {  class : message.style,
+                                text  : message.message,
+                             }).appendTo($targetDiv[0]);
+          };
+
+        if (message.audience = BROADCAST_PUBLIC) {
+          printMessage(message);
+        } else if (message.audience = BROADCAST_SYSTEM) {
+          // system stuff... router...moves ... etc
+        };
+
+      }, // end of _receiveBroadcast
+
+    _broadcastMessage: function(msg) {
+      var thisGame = this;
+
+      thisGame.pubnub.publish({
+        channel : msg.channel.name_system,
+        message : msg
+      });
+    },
+
+    // move this to router and start a different one for game
+    _pubnubInit: function() {
+      var thisGame = this;
+
+      thisGame.pubnub = PUBNUB.init({
+        publish_key   : 'pub-63abcbc3-7727-4157-bb00-13aacb6da270',
+        subscribe_key : 'sub-f189b3cc-1fb0-11e2-8766-d7feed4dee64',
+        uuid: thisGame.thisPlayerName
+        // add uuid: random integers and letter'
+      });
+    },
+
+    _getUserListByChannel: function(channel) {
+      var thisGame = this;
+
+      thisGame.pubnub.here_now({
+        channel   : channel.name_system,
+        callback  : function(m) {
+                      console.log(m);
+                    }
       });
     },
 
     _unsubscribeFromChat: function(channel) {
       var thisGame = this;
       thisGame.pubnub.unsubscribe({
-        channel: 'a', // replace with function ()
+        channel: channel.name_system,
         message: function(m) {
           console.log(m)
         }
       });
 
+      console.log('Unsubscribed from channel: ' + channel.name_public);
     },
 
     _evalSquareFunction: function(board, callbackFunc) {
@@ -252,7 +423,6 @@ $(document).ready(function() {
             thisGame._gameOver();
           };
         };
-
       });
     },
 
