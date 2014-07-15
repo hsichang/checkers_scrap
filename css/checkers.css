@@ -101,10 +101,10 @@ body.lobby #lobby-container {
   }
 
   .lobby-chat-text-holder {
-    width: 320px;
-    height: 360px;
+    width: 318px;
+    height: 375px;
     background-color: #FFF;
-    border: 1px solid rgba(0,0,0,0.7);
+    border: 1px solid rgba(0,0,0,0.2);
     color: #000;
     font-family: helvetica, arial, sans-serif;
     font-size: 14px;
@@ -129,6 +129,9 @@ body.lobby #lobby-container {
 
   input[type=text].lobbyChatInputField.lobby-create-game-room-input {
     width: 150px;
+
+    border-radius: 0px;
+    border: 1px solid rgba(0,0,0,0.2);
   }
 
   .blue-button.chat-submit-button.lobby-create-game-room-button {
@@ -160,10 +163,10 @@ body.lobby #lobby-container {
   }
 
   .lobby-channel-room-text-holder {
-    width: 246px;
-    height: 133px;
+    width: 245px;
+    height: 136px;
     background-color: #FFF;
-    border: 1px solid rgba(0,0,0,0.7);
+    border: 1px solid rgba(0,0,0,0.2);
     color: #000;
     font-family: helvetica, arial, sans-serif;
     font-size: 14px;
@@ -171,7 +174,7 @@ body.lobby #lobby-container {
     overflow-y: scroll;
     position: relative;
     top: -80px;
-    left: -1px;
+    left: -2px;
   }
 
   .lobby-channel-container {
@@ -187,14 +190,13 @@ body.lobby #lobby-container {
     color: #000;
 
     position: relative;
-    top: -260px;
-    left: 25px;
+    top: -261px;
+    left: 30px;
   }
-
 
   .lobby-channel-form-container {
     position: relative;
-    top: 177px;
+    top: 170px;
     left: -2px;
   }
 

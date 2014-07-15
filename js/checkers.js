@@ -1,7 +1,5 @@
 // checklist:
 //
-// Chat
-// Lobby
 // Create Room
 // Start remote game
 // Admin panel for hidden buttons like 'clear'
@@ -12,7 +10,6 @@
 // Piece counter
 // Game over
 // Single Player
-// PubNub : http://www.pubnub.com/docs/javascript/tutorial/quick-start.html
 
 // turn is _playerTurn
 $(document).ready(function() {
@@ -28,18 +25,8 @@ $(document).ready(function() {
 
       NEW_GUEST_STYLE = 'chat-alert-new-guest';
 
-
-
-
-
-
       // deprecate
   var trace = function() { console.log('\n\nTRACE\n\n') };
-
-
-
-
-
 
   var Router = function() {
     var thisRouter = this;
@@ -110,6 +97,8 @@ $(document).ready(function() {
     self.$lobbyChatInput = $('#lobbyChatInputText');
     self.$sendToChatLobby = $('.send-lobby-chat-button');
     self.$lobbyChatView = $('.lobby-chat-text-holder');
+    self.$createRoomBtn = $('.lobby-create-game-room-button');
+    self.$createRoomInputText = $('#createGameRoomInputText');
 
     self.players = {};
     self.turn = null;
@@ -198,10 +187,21 @@ $(document).ready(function() {
         thisGame._unsubscribeFromChat(CHANNEL_LOBBY);
       },
 
+      createRoomHandler = function(evt) {
+        evt.preventDefault();
+
+        if (thisGame.$createRoomInputText.val() !== '') {
+          console.log(thisGame.$createRoomInputText.val());
+        };
+
+       // don't forget to push the new room into the
+       // thisGame.broadcastChannels.push(CHANNEL_LOBBY)
+      },
+
       sendToLobbyChatHandler = function(evt) {
         evt.preventDefault();
 
-        msg = thisGame.$lobbyChatInput.val();
+        var msg = thisGame.$lobbyChatInput.val();
         if (msg !== '') {
           message = { channel     : CHANNEL_LOBBY,
                       message     : '> ' + thisGame.thisPlayerName + ': ' + msg,
@@ -218,15 +218,23 @@ $(document).ready(function() {
 
       thisGame.$sendToChatLobby.bind('click', sendToLobbyChatHandler);
 
-      thisGame.$lobbyChatInput.on('keypress', thisGame.$sendToChatLobby, function(args) {
-        if (args.keyCode === 13) {
+      thisGame.$lobbyChatInput.on('keypress', thisGame.$sendToChatLobby, function(keypress) {
+        if (keypress.keyCode === 13) {
           thisGame.$sendToChatLobby.click();
           return false;
         };
       });
 
-      // dont forget to unbind these events after the lobby is
-      // exited
+      thisGame.$createRoomBtn.bind('click', createRoomHandler);
+
+      thisGame.$createRoomInputText.on('keypress', thisGame.$createRoomBtn, function(keypress) {
+        if (keypress.keyCode === 13) {
+          thisGame.$createRoomBtn.click();
+          return false;
+        };
+      });
+
+      // dont forget to unbind these events after the lobby is exited
     },
 
     _movePieces: function(board, squares) {
