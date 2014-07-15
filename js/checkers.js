@@ -2,18 +2,68 @@
 //
 // Double Jump
 // Scoreboard
+// fix score bug
 // Piece counter
 // Game over
 // Lobby
 // Chat
 // Single Player
-// PubNub
+// PubNub : http://www.pubnub.com/docs/javascript/tutorial/quick-start.html
 
+// turn is _playerTurn
 $(document).ready(function() {
+  var ROUTE_WELCOME = 'welcome',
+      ROUTE_LOBBY   = 'lobby',
+      ROUTE_GAME    = 'playing';
+
+  var Router = function() {
+    var thisRouter = this;
+  };
+
+  Router.prototype = {
+    _welcomeScreen: function(thisGame) {
+      var thisRouter = this;
+
+      thisGame._switchWindow(ROUTE_WELCOME);
+      thisGame._bindWelcomeClickEvents(thisGame);
+    },
+
+    _lobby: function(thisGame, name) {
+              // should _switchWindow have a callback function?
+      thisGame._switchWindow(ROUTE_LOBBY);
+      console.log(name);
+    },
+
+    _startPlaying: function(thisGame) {
+      var thisRouter = this;
+      thisGame._switchWindow(ROUTE_GAME);
+      gameBoard = new Board();
+      gameBoard._drawNewBoard(thisGame)
+
+      // start game -- make an option here for one or two players
+      thisGame._playerTurn(gameBoard);
+    },
+
+    _gameOver: function() {
+
+    },
+
+    _chatRoom: function() {
+
+    },
+
+    _privateChat: function() {
+
+    },
+
+  };
+
   var Checkers = function() {
     var self = this;
     self.$body = $('body');
     self.$board = $('#board');
+    self.$playerName = $('#playerName');
+    self.$submitName = $('#submitCredentials');
     self.$player_1_move = $('#move_player_1');
     self.$player_2_move = $('#move_player_2');
     self.$debugSquareDisplay = $('#debug-display-square');
@@ -23,24 +73,213 @@ $(document).ready(function() {
     self.players =  { 1 : new Player(1),
                       2 : new Player(2) };
 
-    self._toggleBoard("playing"); /* Starts the game */
+    self.pubnub = PUBNUB.init({
+      publish_key: 'demo',
+      subscribe_key: 'demo'
+    });
+
+    self.router = new Router();
+
+    //self.router._welcomeScreen(self);
+
+    self.router._startPlaying(self);
   };
 
+  Checkers.prototype = {
+    _chat: function() {
+    },
+
+    _debug: function(evt, action) {
+      var self = this,
+          target = evt.target.id,
+          $targetDiv = $('#' + target);
+
+      if ($targetDiv.hasClass("legal") && action === "display-square") {
+        self.$debugSquareDisplay.text("#"+target+" "+"classes: " + $targetDiv.attr("class"));
+      } else {
+        self.$debugSquareDisplay.text("");
+      };
+    },
+
+    _switchWindow: function(ROUTE) {
+      this.$body.removeClass( this.$body.attr('class') );
+      this.$body.toggleClass(ROUTE);
+    },
+
+    _bindWelcomeClickEvents : function(thisGame) {
+      thisGame.$submitName.on('click', function(evt){
+        var name = thisGame.$playerName.val();
+
+        evt.preventDefault();
+        thisGame.$playerName.val('');
+        thisGame.router._lobby(thisGame, name);
+      });
+    },
+
+    _movePieces: function(board, squares) {
+      var thisGame    = this,
+          score       = 0,
+          totalScore  = 0;
+
+      for(var square in squares) {
+
+        board[squares[square]]._emptySquare();
+
+        var score = 1;
+
+        if (board[squares[square]].king) { var score = score + 2 }
+
+        var opponent = board[squares[square]].player;
+
+        board[squares[square]].player = null;
+        board[squares[square]].availableMoves = [];
+        board[squares[square]].occupied = false;
+
+        totalScore = totalScore + score;
+      };
+
+      var player = (opponent === 1) ? 2 : 1;
+
+      thisGame.players[player].score = thisGame.players[player].score + totalScore;
+      thisGame._updateScore();
+    },
+
+    _updateScore: function() {
+      var thisGame = this;
+
+      console.log("\n\n\n\nScore:");
+      console.log("Player1: " + thisGame.players[1].score + ". Player2: " + thisGame.players[2].score + "\n\n\n");
+    },
+
+    _clearEvaluatedMoves: function(board) {
+      var clearFunc = function(square) {
+        square.availableMoves = [];
+      };
+      this._evalSquareFunction(board, clearFunc);
+    },
+
+    _toggleBoard: function(state) {
+      var thisGame = this;
+      if (state === "playing") {
+        // default to one player
+      };
+    },
+
+    _subscribeToChatChannel: function(channel) {
+      var thisGame = this;
+      thisGame.pubnub.subscribe({                          // initialize chat here
+        channel: 'a',
+        message: function(m) {
+          console.log(m)
+        }
+      });
+    },
+
+    _unsubscribeFromChat: function(channel) {
+      var thisGame = this;
+      thisGame.pubnub.unsubscribe({
+        channel: 'a', // replace with function ()
+        message: function(m) {
+          console.log(m)
+        }
+      });
+
+    },
+
+    _evalSquareFunction: function(board, callbackFunc) {
+      var self = this,
+          player = self.turn,
+          squareKeys = Object.keys(board),
+          n = squareKeys.length;
+
+      console.log(squareKeys);
+      console.log(board);
+      while (n--) {
+        if ((squareKeys[n] !== "currentSquare") && (board[squareKeys[n]].legal_space)) {
+          if (board[squareKeys[n]]._occupiedByPlayer(player)) {
+            callbackFunc(board[squareKeys[n]]);
+          };
+        };
+      };
+    },
+
+    _evaluatePlayerMoves: function(board) {
+      var thisGame  = this,
+          player    = thisGame.turn,
+          evaluateMovesFunc = function(square) {
+            square._evaluateMoves(board, player);
+          };
+
+      this._evalSquareFunction(board, evaluateMovesFunc);
+    },
+
+    _playerTurn : function(gameBoard) {
+      var thisGame = this,
+          $squares = $('.square');
+
+      console.log("\nNew turn\nPlayer: " + thisGame.turn);
+
+      thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
+
+      // if (player 1 !== 'cpu') { } // add this line here
+      /* note - game has just STARTED -- it should say it is anticipating an action */
+
+      $squares.on("click", function(evt) {
+        var targetSquare = gameBoard[evt.currentTarget.id];
+
+        if ( !targetSquare._active() ) {
+
+          if ( (targetSquare._occupiedByPlayer(thisGame.turn)) && (targetSquare.availableMoves.length > 0) ){
+            gameBoard._clearHighlights();
+            gameBoard._highlightAvailableMoves(targetSquare);
+          } else {                              // targetSquare is not active or clickable - clear
+            gameBoard._clearHighlights();
+          };
+        };
+
+        if (targetSquare._active()) {                     // target square is clickable - move
+          gameBoard._initiateMove(targetSquare, thisGame);
+          thisGame._clearEvaluatedMoves(gameBoard);
+          gameBoard._clearHighlights();
+
+          if (thisGame._proceed()) {
+            thisGame.turn = (thisGame.turn === 1) ? 2 : 1;
+
+            // new turn
+            console.log("\nNew turn\nPlayer: " + thisGame.turn);
+            thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
+          } else {
+            thisGame._gameOver();
+          };
+        };
+
+      });
+    },
+
+    _proceed: function() {
+      var self = this;
+      opponent = (self.turn === 1) ? 2 : 1;
+      return true;
+    },
+
+    _gameOver: function() {
+      var self = this;
+      alert("Game over.  You win!");
+    },
+
+  }; /* end of Checkers.prototype */
 
   var Board = function() {
     var self = this;
   };
 
   Board.prototype = {
-
     _drawNewBoard: function(checkersGame) {
       var thisGame = checkersGame,
           rows = 8,
           cols = 8,
           legal = false,
           gameBoard = this;
-
-      thisGame.$body.toggleClass('playing');            /* current starts the game */
 
       for (r=1; r<rows+1; r++) {
 
@@ -83,23 +322,10 @@ $(document).ready(function() {
       thisGame.turn = 1;
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
     _drawNewSquare: function(name, legal, coords) {
       square = '<div id="' + square_name+'" class="square ' + legal_space + '"></div>';
       $('#r'+coords.row).append(square);
     },
-
 
     _highlightAvailableMoves : function(square) {
       var self = this;
@@ -159,41 +385,14 @@ $(document).ready(function() {
     },
   };
 
-  /*
-   * Player
-   *
-   * player: 1 or 2
-   * pieces: number of pieces on board
-   * score: number of pieces taken
-   * moves: array of all moves,
-   *    move number is implied: index + 1
-   *    moves[ {  from: squareName,
-   *              to  : squareName,
-   *              take: take piece during move?
-   *              pieces: numberOfPieces taken, 0 if take is false }, .. ]
-   *
-   * functions
-   *
-   * _addMove(fromSquare, toSquare, take, numberOfPieces) : adds move object to moves array
-   *
-   *
-   *
-   * _addScore(numberOfPieces) : increments self.score by numberOfPieces
-   *    returns true -- if the player has won
-   *    returns false -- no win, next move
-   *
-   * _losePieces(numberOfPieces) : reduces the number of pieces by number
-   *
-   *
-   */
-
   var Player = function(player) {
     var self = this;
 
-    self.player = player;
-    self.score = 0;
-    self.pieces = 16;
-    self.moves = [];
+    self.player   = player;
+    self.score    = 0;
+    self.pieces   = 16;
+    self.cpu      = false;
+    self.moves    = [];
   };
 
   Player.prototype = {
@@ -217,39 +416,6 @@ $(document).ready(function() {
 
   }; /* end of player prototype */
 
-  /* Piece may be deprecated */
-  var Piece = function(player) {
-    this.player = player;
-  };
-
-  /*
-   * Square
-   *
-   *  name        : string
-   *  selected    : boolean
-   *  occupied    : boolean
-   *  player      : integer
-   *  king        : boolean
-   *  avaliableMoves : array (array of square names it can highlight)
-   *
-   *  written functions
-   *
-   *  _sane
-   *  _occupy - sets occupy to true
-   *  _occupiedByPlayer(player) - returns true if occupied by player
-   *  _isBlocked  : returns true if you can not move the piece
-   *  _pieceDirection : returns the direction a piece moves (+/- 1)
-   *  _playable : returns true if moves are available
-   *  _active : returns true if highlit
-   *
-   *  _highlightAvailableMoves() : highlights available moves - this should probably go to a larger scope
-   *
-   *  write:
-   *
-   *  evaluateMoves : fills in availableMoves array
-   *
-   *
-   */
   function Square(name, coords, legal, player, king) {
     /* modify function: if you update a square it should check if sane, */
     var self = this;
@@ -457,151 +623,8 @@ $(document).ready(function() {
     },
   };
 
-  Checkers.prototype = {
-    _debug: function(evt, action) {
-      var self = this,
-          target = evt.target.id,
-          $targetDiv = $('#' + target);
 
-      if ($targetDiv.hasClass("legal") && action === "display-square") {
-        self.$debugSquareDisplay.text("#"+target+" "+"classes: " + $targetDiv.attr("class"));
-      } else {
-        self.$debugSquareDisplay.text("");
-      };
-    },
 
-    _movePieces: function(board, squares) {
-      var thisGame    = this,
-          score       = 0,
-          totalScore  = 0;
-
-      for(var square in squares) {
-
-        board[squares[square]]._emptySquare();
-
-        var score = 1;
-
-        if (board[squares[square]].king) { var score = score + 2 }
-
-        var opponent = board[squares[square]].player;
-
-        board[squares[square]].player = null;
-        board[squares[square]].availableMoves = [];
-        board[squares[square]].occupied = false;
-
-        totalScore = totalScore + score;
-      };
-
-      var player = (opponent === 1) ? 2 : 1;
-
-      thisGame.players[player].score = thisGame.players[player].score + totalScore;
-      thisGame._updateScore();
-    },
-
-    _updateScore: function() {
-      var thisGame = this;
-
-      console.log("\n\n\n\nScore:");
-      console.log("Player1: " + thisGame.players[1].score + ". Player2: " + thisGame.players[2].score + "\n\n\n");
-    },
-
-    _clearEvaluatedMoves: function(board) {
-      var clearFunc = function(square) {
-        square.availableMoves = [];
-      };
-      this._evalSquareFunction(board, clearFunc);
-    },
-
-    _toggleBoard: function(state) {
-      var self = this;
-      if (state === "playing") {
-        gameBoard = new Board();
-        gameBoard._drawNewBoard(self)
-        self._playerTurn(gameBoard);            // start game -- make an option here for one or two players
-        // default to one player
-      };
-    },
-
-    _evalSquareFunction: function(board, callbackFunc) {
-      var self = this,
-          player = self.turn;
-
-      for (var square in board) {
-        if (board.hasOwnProperty(square)) {
-          if ((square !== "currentSquare") && (board[square].legal_space)) {    // should be a boolean value
-            if (board[square]._occupiedByPlayer(player)) {
-              callbackFunc(board[square]);
-            };
-          };
-        };
-      };
-    },
-
-    _evaluatePlayerMoves: function(board) {
-      var thisGame  = this,
-          player    = thisGame.turn,
-          evaluateMovesFunc = function(square) {
-            square._evaluateMoves(board, player);
-          };
-
-      this._evalSquareFunction(board, evaluateMovesFunc);
-    },
-
-    _playerTurn : function(gameBoard) {
-      var thisGame = this,
-          $squares = $('.square');
-
-      console.log("\nNew turn\nPlayer: " + thisGame.turn);
-
-      thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
-
-      // if (player 1 !== 'cpu') { } // add this line here
-      /* note - game has just STARTED -- it should say it is anticipating an action */
-
-      $squares.on("click", function(evt) {
-        var targetSquare = gameBoard[evt.currentTarget.id];
-
-        if ( !targetSquare._active() ) {
-
-          if ( (targetSquare._occupiedByPlayer(thisGame.turn)) && (targetSquare.availableMoves.length > 0) ){
-            gameBoard._clearHighlights();
-            gameBoard._highlightAvailableMoves(targetSquare);
-          } else {                              // targetSquare is not active or clickable - clear
-            gameBoard._clearHighlights();
-          };
-        };
-
-        if (targetSquare._active()) {                     // target square is clickable - move
-          gameBoard._initiateMove(targetSquare, thisGame);
-          thisGame._clearEvaluatedMoves(gameBoard);
-          gameBoard._clearHighlights();
-
-          if (thisGame._proceed()) {
-            thisGame.turn = (thisGame.turn === 1) ? 2 : 1;
-
-            // new turn
-            console.log("\nNew turn\nPlayer: " + thisGame.turn);
-            thisGame._evaluatePlayerMoves(gameBoard);       // start the turn by populating available moves
-          } else {
-            thisGame._gameOver();
-          };
-        };
-
-      });
-    },
-
-    _proceed: function() {
-      var self = this;
-      opponent = (self.turn === 1) ? 2 : 1;
-      return true;
-    },
-
-    _gameOver: function() {
-      var self = this;
-      alert("Game over.  You win!");
-    },
-
-  }; /* end of Checkers.prototype */
 
   new Checkers();
 });

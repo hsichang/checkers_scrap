@@ -5,42 +5,61 @@
     <title>::checkers::</title>
     <link rel="stylesheet" href="css/checkers.css">
     <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/pubnub.js"></script>
     <script src="js/checkers.js"></script>
   </head>
 
-  <body class="checkers">
+  <body>
+
     <div id="main">
-      <h3>Hello. My name is:</h3>
-      <input id="player_name" type="text" placeholder="input name here" />
+      <div class="masthead-container">
+        <h3>Hello. My name is:</h3>
+      </div>
 
-      <input type="radio" name="board-size" id="players-two" value="players-two" checked="checked"/>
-      <label for="players-two">Two Players</label>
-      <input type="radio" name="board-size" id="players-four" value="players-four" />
-      <label for="players-two">Two Players</label>
+      <div class="credentials-form-container">
 
-      <input type="button" id="START GAME" value="submit" />
+        <form name="credentialsForm">
+          <div>
+            <input id="playerName" type="text" placeholder="input name here" />
+          </div>
+
+          <input type="button" id="submitCredentials" value="submit" />
+        </form>
+      </div><!-- .credentials-form-container -->
 
       <div id="encyclopedia">
         <h4>Did you know???</h4>
         <h5>...that checkers is an ancient game dating back to 3000BC in the Sumerian city of Ur.</h5>
       </div><!-- #encyclopedia -->
+
     </div><!-- #main -->
+
+    <div id="lobby-container">
+
+
+    </div><!-- #lobby-container -->
+
+
 
     <div id="board-container">
       <div id="banner"><!-- C4ECKERS --></div>
-      <!--
-      <div class="scoreboard-row">
-        <div id="scoreboard-player-1" class="scoreboard"></div>
-        <div id="scoreboard-player-2" class="scoreboard"></div>
-      <div class="clear"></div>
-      -->
-      </div>
       <div id="board"></div>
-      <div id="debug-display-square"></div>
-      <div id="move-banner">
-        Current Move:
-        <span id="move_player_1" class="turn">Player 1</span>
-        <span id="move_player_2" class="turn">Player 2</span>
+      <div id="game-displays">
+
+        <div id="debug-display-square"></div>
+
+        <div id="move-banner">
+          Current Move:
+          <span id="move_player_1" class="turn">Player 1</span>
+          <span id="move_player_2" class="turn">Player 2</span>
+        </div>
+
+        <div class="scoreboard-row">
+          <div id="scoreboard-player-1" class="scoreboard"></div>
+          <div id="scoreboard-player-2" class="scoreboard"></div>
+        <div class="clear"></div>
+
+      </div>
       </div>
     </div><!-- #board container -->
 

@@ -1,4 +1,8 @@
-body.checkers {
+body {
+  background-color: #FAFAFA;
+}
+
+body.playing {
 	background-color: blue;
 	background: url('../images/ur2.png');
 	background-position: center;
@@ -6,23 +10,58 @@ body.checkers {
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;
-	background-size: cover;
+  background-size: cover;
 }
-
-body.checkers #main {
-  display: block;
-}
-  body.checkers.playing #main {
+  body.playing #main {
     display: none;
   }
 
-body.checkers #board-container {
+
+body.welcome {
+	background-color: blue;
+	background: url('../images/ur2.png');
+	background-position: center;
+	background-attachment: fixed;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+  background-size: cover;
+}
+  body.welcome #game-displays {
+    display: none;
+  }
+  body.welcome #board-container {
+  /*  display:none; */
+  }
+  body.welcome #board {
+    display: none;
+  }
+  body.welcome #main {
+    display: block;
+    width: 650px;
+    margin: auto;
+  }
+
+body.
+
+
+input[type=text]{
+	width: 600px;
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 60px;
+  padding: 30px;
+  border-radius: 15px;
+}
+
+body.playing #board-container {
   display: none;
   width: 100%;
 }
-  body.checkers.playing #board-container {
+  body.playing.playing #board-container {
     display: block;
   }
+
+
 
 #banner {
 	font-family: 'proxima-nova', sans-serif;
@@ -51,11 +90,11 @@ body.checkers #board-container {
 
 #board {
 	height: 440px;
-	width: 425px;
+	width: 424px;
   margin: 20px auto 50px auto;
 	padding: 0px;
 	opacity: .8;
-  border: 2px solid #FFF;
+  border: 3px solid #000;
 }
 
 .row {
@@ -163,4 +202,15 @@ body.checkers #board-container {
 
 .clear {
   clear: both;
+}
+
+h3 {
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  font-size: 34px;
+  margin: 0px;
+}
+
+.masthead-container {
+  margin: 50px 0 15px 25px;
+
 }
