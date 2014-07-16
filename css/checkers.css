@@ -1,3 +1,9 @@
+/*
+ * Checklist
+ *
+ * responsive for mobile site
+ */
+
 body {
 	background-color: blue;
 	background: url('../images/ur2.png');
@@ -37,8 +43,14 @@ body.playing #board {
 
 
 /* lobby */
+#lobby-container:after {
+  clear: both;
+}
+
 body.lobby #lobby-container {
   display: block;
+  width: 800px;
+  margin: 50px auto 0;
 }
   #lobby-container {
     display: none;
@@ -55,6 +67,8 @@ body.lobby #lobby-container {
     font-family: helvetica, arial, sans-serif;
     font-size: 30px;
     color: #000;
+
+    float: left;
   }
 
   .close-chat-button-container {
@@ -96,8 +110,7 @@ body.lobby #lobby-container {
   }
 
   .lobby-chat-input-container {
-    position: absolute;
-    top: 488px;
+    margin-top: 5px;
   }
 
   .lobby-chat-text-holder {
@@ -181,6 +194,7 @@ body.lobby #lobby-container {
     width: 277px;
     height: 209px;
     padding: 25px;
+    margin: 290px 10px 0 0;
 
     background-color: rgba(255, 255, 255, 0.8);
     border: 2px solid #FAFAFA;
@@ -189,9 +203,7 @@ body.lobby #lobby-container {
     font-size: 30px;
     color: #000;
 
-    position: relative;
-    top: -261px;
-    left: 30px;
+    float: left;
   }
 
   .lobby-channel-form-container {

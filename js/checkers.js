@@ -124,9 +124,9 @@ $(document).ready(function() {
 
     // self.router._startPlaying(self);  // this logic will move to route - deprecate - test only
 
-    self.router._tempStart(self) // this is still not done but i've uncommented for you to check
+    // self.router._tempStart(self) // this is still not done but i've uncommented for you to check
 
-    // self.router._welcomeScreen(self); // Matt: uncomment this to check out the beginning of chat
+    self.router._welcomeScreen(self); // Matt: uncomment this to check out the beginning of chat
 
 
   };
@@ -197,38 +197,38 @@ $(document).ready(function() {
       var thisGame  = this,
           message   = {},
 
-      // make this into reusable functions at highest level
-      unsubscribeFromChatHandler = function(evt) {
-        evt.preventDefault();
-        thisGame._unsubscribeFromChat(CHANNEL_LOBBY);
-      },
+          // make this into reusable functions at highest level
+          unsubscribeFromChatHandler = function(evt) {
+            evt.preventDefault();
+            thisGame._unsubscribeFromChat(CHANNEL_LOBBY);
+          },
 
-      createRoomHandler = function(evt) {
-        evt.preventDefault();
+          createRoomHandler = function(evt) {
+            evt.preventDefault();
 
-        if (thisGame.$createRoomInputText.val() !== '') {
-          console.log(thisGame.$createRoomInputText.val());
-        };
+            if (thisGame.$createRoomInputText.val() !== '') {
+              console.log(thisGame.$createRoomInputText.val());
+            };
 
-       // don't forget to push the new room into the
-       // thisGame.broadcastChannels.push(CHANNEL_LOBBY)
-      },
+           // don't forget to push the new room into the
+           // thisGame.broadcastChannels.push(CHANNEL_LOBBY)
+          },
 
-      sendToLobbyChatHandler = function(evt) {
-        evt.preventDefault();
+          sendToLobbyChatHandler = function(evt) {
+            evt.preventDefault();
 
-        var msg = thisGame.$lobbyChatInput.val();
-        if (msg !== '') {
-          message = { channel     : CHANNEL_LOBBY,
-                      message     : '> ' + thisGame.thisPlayerName + ': ' + msg,
-                      style       : NEW_GUEST_STYLE,
-                      audience    : BROADCAST_PUBLIC,
-                      callbackDiv : 'lobby-chat-text-holder'
-                    }
-          thisGame._broadcastMessage(message);
-          thisGame.$lobbyChatInput.val('');
-        };
-      };
+            var msg = thisGame.$lobbyChatInput.val();
+            if (msg !== '') {
+              message = { channel     : CHANNEL_LOBBY,
+                          message     : '> ' + thisGame.thisPlayerName + ': ' + msg,
+                          style       : NEW_GUEST_STYLE,
+                          audience    : BROADCAST_PUBLIC,
+                          callbackDiv : 'lobby-chat-text-holder'
+                        }
+              thisGame._broadcastMessage(message);
+              thisGame.$lobbyChatInput.val('');
+            };
+          };
 
       thisGame.$closeChat.bind('click', unsubscribeFromChatHandler);
 
