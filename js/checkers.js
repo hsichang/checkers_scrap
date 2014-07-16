@@ -1,5 +1,8 @@
 // checklist:
 //
+// Make the text append at the top, so it doesn't get lost at the bottom of the screen.  or
+// if it does go down, have the thing scroll to where it is
+//
 // Create Room
 // Start remote game
 // Admin panel for hidden buttons like 'clear'
@@ -23,7 +26,8 @@ $(document).ready(function() {
       BROADCAST_PUBLIC = 'public',
       BROADCAST_SYSTEM = 'system',
 
-      NEW_GUEST_STYLE = 'chat-alert-new-guest';
+      NEW_GUEST_STYLE       = 'chat-alert-new-guest';
+      NORMAL_MESSAGE_STYLE  = 'chat-normal-text';
 
       // deprecate
   var trace = function() { console.log('\n\nTRACE\n\n') };
@@ -205,13 +209,27 @@ $(document).ready(function() {
 
           createRoomHandler = function(evt) {
             evt.preventDefault();
+            var name_public   = thisGame.$createRoomInputText.val(),
+                newChannel    = {},
+                message       = {};
+// HERE HERE HERE - building the callback function for the system to build a new room
+// Leaving work on line 223 - can't pass a function as a
+//
+            if (name_public !== '') {
+              var name_system = 'changoCheckers'+name_public;
 
-            if (thisGame.$createRoomInputText.val() !== '') {
-              console.log(thisGame.$createRoomInputText.val());
+              new_channel = { name_system : name_system,
+                              name_public : name_public };
+
+              message = { channel     : CHANNEL_LOBBY,
+                          audience    : BROADCAST_SYSTEM,
+                          name_public : name_public,
+                          callbackFunc    : 'broadcastCreateNewChannel' };
             };
 
-           // don't forget to push the new room into the
-           // thisGame.broadcastChannels.push(CHANNEL_LOBBY)
+            thisGame._broadcastMessage(message);
+            thisGame.broadcastChannels.push(new_channel);
+            thisGame.$createRoomInputText.val('');
           },
 
           sendToLobbyChatHandler = function(evt) {
@@ -220,11 +238,10 @@ $(document).ready(function() {
             var msg = thisGame.$lobbyChatInput.val();
             if (msg !== '') {
               message = { channel     : CHANNEL_LOBBY,
-                          message     : '> ' + thisGame.thisPlayerName + ': ' + msg,
-                          style       : NEW_GUEST_STYLE,
+                          message     : thisGame.thisPlayerName + ': ' + msg,
+                          style       : NORMAL_MESSAGE_STYLE,
                           audience    : BROADCAST_PUBLIC,
-                          callbackDiv : 'lobby-chat-text-holder'
-                        }
+                          callbackDiv : 'lobby-chat-text-holder' }
               thisGame._broadcastMessage(message);
               thisGame.$lobbyChatInput.val('');
             };
@@ -315,27 +332,32 @@ $(document).ready(function() {
     },
 
     _receiveBroadcast : function(message) {
-            console.log(message);
       var thisGame = this,
           printMessage = function(message) {
 
             var $targetDiv = $('.' + message.callbackDiv)
-            console.log($targetDiv);
-            console.log(message.message);
-            console.log(message);
-
             jQuery('<div/>', {  class : message.style,
                                 text  : message.message,
                              }).appendTo($targetDiv[0]);
+          },
+
+          broadcastCreateNewChannel = function(message) {
+            console.log('broadcastRoom function is being called');
+            console.log(message);
           };
 
-        if (message.audience = BROADCAST_PUBLIC) {
-          printMessage(message);
-        } else if (message.audience = BROADCAST_SYSTEM) {
-          // system stuff... router...moves ... etc
-        };
+      if (message.audience === BROADCAST_PUBLIC) {
+        printMessage(message);
+      } else if (message.audience === BROADCAST_SYSTEM) {
+        switch (message.callbackFunc) {
+          case 'broadcastCreateNewChannel':
+            broadcastCreateNewChannel(message);
+          // make default: error
 
-      }, // end of _receiveBroadcast
+        }
+      };
+
+    }, // end of _receiveBroadcast
 
     _broadcastMessage: function(msg) {
       var thisGame = this;
@@ -364,6 +386,7 @@ $(document).ready(function() {
       thisGame.pubnub.here_now({
         channel   : channel.name_system,
         callback  : function(m) {
+                      console.log('checking pubnub.here_now');
                       console.log(m);
                     }
       });
@@ -374,6 +397,7 @@ $(document).ready(function() {
       thisGame.pubnub.unsubscribe({
         channel: channel.name_system,
         message: function(m) {
+          console.log('unsubscribing from chat');
           console.log(m)
         }
       });
@@ -387,8 +411,6 @@ $(document).ready(function() {
           squareKeys = Object.keys(board),
           n = squareKeys.length;
 
-      console.log(squareKeys);
-      console.log(board);
       while (n--) {
         if ((squareKeys[n] !== "currentSquare") && (board[squareKeys[n]].legal_space)) {
           if (board[squareKeys[n]]._occupiedByPlayer(player)) {
@@ -569,8 +591,6 @@ $(document).ready(function() {
                         score2: game.players[2].score };
 
       game.moves.push(recordOfMove);
-                                                          console.log("\n\n\nGame moves: ");
-                                                          console.log(game.moves);
       fromSquare._emptySquare();
       toSquare._populateSquare();
 

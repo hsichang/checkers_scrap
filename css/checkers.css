@@ -127,10 +127,15 @@ body.lobby #lobby-container {
     .chat-alert-new-guest {
       color: #4D4D4D;
       font-style: italic;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(0,0,0,0.3);
+      height: 27px;
     }
     .chat-normal-text {
+      color: #000;
       margin-bottom: 10px;
-
+      border-bottom: 1px solid rgba(0,0,0,0.3);
+      height: 27px;
     }
     /* create spans so names are a different color than text */
 
@@ -192,7 +197,7 @@ body.lobby #lobby-container {
 
   .lobby-channel-container {
     width: 277px;
-    height: 209px;
+    height: 210px;
     padding: 25px;
     margin: 290px 10px 0 0;
 
