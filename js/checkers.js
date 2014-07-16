@@ -21,8 +21,7 @@ $(document).ready(function() {
       ROUTE_GAME    = 'playing',
 
       CHANNEL_LOBBY = { name_system : 'changoCheckersLobby',
-                        name_public : 'Lobby'
-                      },
+                        name_public : 'Lobby' },
       BROADCAST_PUBLIC = 'public',
       BROADCAST_SYSTEM = 'system',
 
@@ -38,8 +37,6 @@ $(document).ready(function() {
 
   Router.prototype = {
     _welcomeScreen: function(thisGame) {
-      var thisRouter = this;
-
       thisGame._switchWindow(ROUTE_WELCOME);
       thisGame._bindWelcomeClickEvents();
     },
@@ -50,7 +47,7 @@ $(document).ready(function() {
                       callbackDiv : 'lobby-chat-text-holder' };
 
       thisGame._switchWindow(ROUTE_LOBBY);
-      thisGame._pubnubInit(); // deprecate ?
+      thisGame._pubnubInit();
       thisGame._broadcastManager(CHANNEL_LOBBY); // here
       thisGame._bindLobbyEvents(name);
     },
@@ -78,7 +75,6 @@ $(document).ready(function() {
 
       // start game -- make an option here for one or two players
       thisGame._playerTurn(gameBoard);
-
     },
 
 
@@ -98,32 +94,32 @@ $(document).ready(function() {
 
   var Checkers = function() {
     var self = this;
-    self.$body = $('body');
-    self.$board = $('#board');
-    self.$playerName = $('#playerName');
-    self.$submitName = $('#submitCredentials');
-    self.$player_1_move = $('#move_player_1');
-    self.$player_2_move = $('#move_player_2');
-    self.$debugSquareDisplay = $('#debug-display-square');
+        self.$body = $('body');
+        self.$board = $('#board');
+        self.$playerName = $('#playerName');
+        self.$submitName = $('#submitCredentials');
+        self.$player_1_move = $('#move_player_1');
+        self.$player_2_move = $('#move_player_2');
+        self.$debugSquareDisplay = $('#debug-display-square');
 
-    /* lobby */
-    self.$lobbyWindow = $('.lobby-chat-text-holder');
-    self.$closeChat = $('.close-chat-button');
-    self.$lobbyChatInput = $('#lobbyChatInputText');
-    self.$sendToChatLobby = $('.send-lobby-chat-button');
-    self.$lobbyChatView = $('.lobby-chat-text-holder');
-    self.$createRoomBtn = $('.lobby-create-game-room-button');
-    self.$createRoomInputText = $('#createGameRoomInputText');
+        /* lobby */
+        self.$lobbyWindow = $('.lobby-chat-text-holder');
+        self.$closeChat = $('.close-chat-button');
+        self.$lobbyChatInput = $('#lobbyChatInputText');
+        self.$sendToChatLobby = $('.send-lobby-chat-button');
+        self.$lobbyChatView = $('.lobby-chat-text-holder');
+        self.$createRoomBtn = $('.lobby-create-game-room-button');
+        self.$createRoomInputText = $('#createGameRoomInputText');
 
-    self.players = {};
-    self.turn = null;
-    self.moves = [];
-    self.players =  { 1 : new Player(1),
-                      2 : new Player(2) };
-    self.broadcastChannels = [];
-    self.broadcastChannels.push(CHANNEL_LOBBY);
+        self.players = {};
+        self.turn = null;
+        self.moves = [];
+        self.players =  { 1 : new Player(1),
+                          2 : new Player(2) };
+        self.broadcastChannels = [];
+        self.broadcastChannels.push(CHANNEL_LOBBY);
 
-    self.router = new Router();
+        self.router = new Router();
 
 
     // self.router._startPlaying(self);  // this logic will move to route - deprecate - test only
@@ -189,6 +185,7 @@ $(document).ready(function() {
           };
 
       thisGame.$submitName.bind('click', submitNameHandler);
+
       thisGame.$body.on('keypress', thisGame.$submitName, function(args) {
         if (args.keyCode === 13) {
           thisGame.$submitName.click();
@@ -221,9 +218,9 @@ $(document).ready(function() {
               new_channel = { name_system : name_system,
                               name_public : name_public };
 
-              message = { channel     : CHANNEL_LOBBY,
-                          audience    : BROADCAST_SYSTEM,
-                          name_public : name_public,
+              message = { channel         : CHANNEL_LOBBY,
+                          audience        : BROADCAST_SYSTEM,
+                          name_public     : name_public,
                           callbackFunc    : 'broadcastCreateNewChannel' };
             };
 
