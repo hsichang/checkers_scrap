@@ -111,6 +111,7 @@ $(document).ready(function() {
         self.$createRoomBtn = $('.lobby-create-game-room-button');
         self.$createRoomInputText = $('#createGameRoomInputText');
 
+
         self.players = {};
         self.turn = null;
         self.moves = [];
@@ -221,7 +222,8 @@ $(document).ready(function() {
               message = { channel         : CHANNEL_LOBBY,
                           audience        : BROADCAST_SYSTEM,
                           name_public     : name_public,
-                          callbackFunc    : 'broadcastCreateNewChannel' };
+                          callbackFunc    : 'broadcastCreateNewChannel',
+                          callbackDiv : 'lobby-channel-room-text-holder' };
             };
 
             thisGame._broadcastMessage(message);
@@ -320,41 +322,69 @@ $(document).ready(function() {
       var thisGame = this;
 
       thisGame.pubnub.subscribe({
-        channel: channel.name_system,
-        message: thisGame._receiveBroadcast,
-        heartbeat: 30 // timeout before unsubscribe in seconds
+        channel   : channel.name_system,
+        message   : thisGame._receiveBroadcast,
+//        presence  : presence function that returns user uuid when they enter the room,
+//        // for now, hard code a new user message
+        heartbeat : 30 // timeout before unsubscribe in seconds
       });
 
       thisGame._getUserListByChannel(channel);
     },
 
+
     _receiveBroadcast : function(message) {
       var thisGame = this,
-          printMessage = function(message) {
+          _printMessage = function(message) {
 
             var $targetDiv = $('.' + message.callbackDiv)
             jQuery('<div/>', {  class : message.style,
                                 text  : message.message,
+
                              }).appendTo($targetDiv[0]);
           },
 
-          broadcastCreateNewChannel = function(message) {
-            console.log('broadcastRoom function is being called');
-            console.log(message);
-          };
+          // _broadcastCreateNewChannel = function(message) {
+         _constructNewChannelName = function(string) {
+            var newName = "",
+                roomNameStrings = message.name_public.split(/[^a-zA-Z]+/);
 
+            for(var w in roomNameStrings) {
+              word = roomNameStrings[w];
+              word = word.charAt(0).toUpperCase() + word.slice(1);
+              newName = newName + word;
+            }
+            return 'changoCheckers' + newName;
+          },
+
+         _broadcastCreateNewChannel = function(message) {
+
+         };
+
+// we can make the new user alert here, just as any other message except the broadcast_system
       if (message.audience === BROADCAST_PUBLIC) {
-        printMessage(message);
+        _printMessage(message);
       } else if (message.audience === BROADCAST_SYSTEM) {
         switch (message.callbackFunc) {
           case 'broadcastCreateNewChannel':
-            broadcastCreateNewChannel(message);
-          // make default: error
+            message.message = message.name_public;
+            channelNamePrivate = _constructNewChannelName(message.message);
+            message.name_private = channelNamePrivate;
+            var newChannel = {  name_public   : message.message,
+                                name_private  : channelNamePrivate };
+            message.channel = newChannel;
+            console.log(message);
+            _printMessage(message)
+            //  _broadcastCreateNewChannel(message);
 
+          // make default switch statement: error
         }
       };
 
     }, // end of _receiveBroadcast
+
+
+    // consolidate all pubnub functions
 
     _broadcastMessage: function(msg) {
       var thisGame = this;
@@ -379,7 +409,7 @@ $(document).ready(function() {
 
     _getUserListByChannel: function(channel) {
       var thisGame = this;
-
+/* this is for the user list to come
       thisGame.pubnub.here_now({
         channel   : channel.name_system,
         callback  : function(m) {
@@ -387,6 +417,7 @@ $(document).ready(function() {
                       console.log(m);
                     }
       });
+      */
     },
 
     _unsubscribeFromChat: function(channel) {
@@ -470,6 +501,7 @@ $(document).ready(function() {
     },
 
     _proceed: function() {
+                // this should check the piece count - if opponent's piece count is 0 - game over - return false
       var self = this;
       opponent = (self.turn === 1) ? 2 : 1;
       return true;
@@ -477,6 +509,8 @@ $(document).ready(function() {
 
     _gameOver: function() {
       var self = this;
+      // change this to a modal, not an alert.  'You' needs to surface on the correct screen, so it's two broadcasts.  Unless
+      // it is 1 Player, then it's just you win or the computer ins
       alert("Game over.  You win!");
     },
 
@@ -575,7 +609,7 @@ $(document).ready(function() {
       toSquare.king     = (newKing) ? true : fromSquare.king;
 
       if (moveData.pieces) {
-        pieces = moveData.pieces
+        pieces = moveData.pieces // deprecate - unnecessary line
         score = game._movePieces(thisBoard, moveData.pieces);
       };
 
@@ -587,7 +621,7 @@ $(document).ready(function() {
                         score1: game.players[1].score,
                         score2: game.players[2].score };
 
-      game.moves.push(recordOfMove);
+      game.moves.push(recordOfMove); // << change game to thisGame for consistency across the code
       fromSquare._emptySquare();
       toSquare._populateSquare();
 
@@ -673,6 +707,7 @@ $(document).ready(function() {
     },
 
     _active: function() {
+               // change self to thisSquare
       var self = this;
       return $('#'+self.name).hasClass('highlight');
     },
@@ -683,22 +718,26 @@ $(document).ready(function() {
     },
 
     _occupy: function() {
+               // change self to thisSquare
       var self = this;
       self.occupy = true;
       self._sane(); // sanity check
     },
 
     _occupiedByPlayer: function(player) {
+               // change self to thisSquare
       var self = this;
       return self.player === player
     },
 
     _isBlocked: function() {
+               // change self to thisSquare
       var self = this;
       return self.availableMoves.length === 0;
     },
 
     _playable: function() {
+               // change self to thisSquare
       var self = this;
       return self.availableMoves.length !== 0;
     },
@@ -820,7 +859,7 @@ $(document).ready(function() {
                 squaresToCheck.push(thisSquare._constructMoves(scope.coords, x_dir, y_dir, step, pieces));
                 exit = exit + 1;
               };
-            } else {                   // for now for double jump
+            } else {                   // and now... code for double jump
 
             };
           } else {                                                                    // has a move
