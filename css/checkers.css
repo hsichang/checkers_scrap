@@ -309,7 +309,7 @@ body.lobby #lobby-container {
     }
 
     .square.legal.highlight {
-      border: 2px dotted yellow;
+      border: 1px dotted yellow;
       width: 51px;
       height: 53px;
     }
