@@ -1,4 +1,5 @@
 /*
+ *
  * Checklist
  *
  * responsive for mobile site
@@ -35,6 +36,8 @@ body.welcome #init-container {
 
 body.playing #board-container {
   display: block;
+
+  margin-top: 200px;
 }
 
 body.playing #board {
@@ -309,9 +312,11 @@ body.lobby #lobby-container {
     }
 
     .square.legal.highlight {
-      border: 1px dotted yellow;
+      border: 1px dotted white;
       width: 51px;
       height: 53px;
+      opacity: .5;
+      background-color: red;
     }
 
   .piece_1 {

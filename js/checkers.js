@@ -28,7 +28,7 @@ $(document).ready(function() {
       NEW_GUEST_STYLE       = 'chat-alert-new-guest';
       NORMAL_MESSAGE_STYLE  = 'chat-normal-text';
 
-      // deprecate
+  // deprecate
   var trace = function() { console.log('\n\nTRACE\n\n') };
 
   var Router = function() {
@@ -59,7 +59,7 @@ $(document).ready(function() {
       // not a _blank either, for mobile ...
       // or something
 
-      thisGame.$sendToChatLobby.unbind('click', sendToLobbyChatHandler);
+      // thisGame.$sendToChatLobby.unbind('click', sendToLobbyChatHandler);
       thisGame._switchWindow(ROUTE_GAME);
       gameBoard = new Board();
       gameBoard._drawNewBoard(thisGame)
@@ -122,12 +122,13 @@ $(document).ready(function() {
 
         self.router = new Router();
 
-
-    // self.router._startPlaying(self);  // this logic will move to route - deprecate - test only
+    // THIS IS THE LOGIC THAT SHOWS WHERE TO START THE GAME.
+    self.router._startPlaying(self);  // Start playing on an anonymous board - test only
+    // self.router._welcomeScreen(self); // start at the begining of the chat flow
 
     // self.router._tempStart(self) // this is still not done but i've uncommented for you to check
+    //
 
-    self.router._welcomeScreen(self); // Matt: uncomment this to check out the beginning of chat
 
 
   };
